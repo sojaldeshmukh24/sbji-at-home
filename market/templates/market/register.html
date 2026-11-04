@@ -1,0 +1,95 @@
+{% extends "market/base.html" %}
+
+{% block title %}Create your account | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .customer-register-page { max-width: 1040px; margin: 0 auto; padding: 2rem 1rem 3.5rem; color: #183329; }
+        .customer-register-layout { display: grid; overflow: hidden; border: 1px solid #e2eae4; border-radius: 24px; background: #fff; box-shadow: 0 18px 55px rgb(20 45 30 / 9%); }
+        .customer-register-intro { position: relative; overflow: hidden; padding: 1.6rem; background: linear-gradient(145deg, #e8f4e9, #f6f7df 78%); }
+        .customer-register-intro::after { position: absolute; right: -3.3rem; bottom: -5rem; width: 14rem; height: 14rem; border: 1px solid rgb(23 107 69 / 13%); border-radius: 50%; box-shadow: 0 0 0 1.2rem rgb(23 107 69 / 5%), 0 0 0 2.4rem rgb(23 107 69 / 4%); content: ""; }
+        .customer-register-kicker { display: inline-flex; margin: 0 0 .9rem; padding: .4rem .65rem; border: 1px solid rgb(23 107 69 / 16%); border-radius: 999px; background: rgb(255 255 255 / 68%); color: #176b45; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+        .customer-register-intro h1 { max-width: 15ch; margin: 0; font-size: clamp(1.9rem, 5vw, 2.55rem); letter-spacing: -.045em; line-height: 1.08; }
+        .customer-register-intro > p:not(.customer-register-kicker) { max-width: 38ch; margin: .75rem 0 0; color: #52665a; line-height: 1.65; }
+        .customer-register-benefit { display: flex; position: relative; z-index: 1; align-items: center; gap: .7rem; margin-top: 1.25rem; color: #355a43; font-size: .9rem; font-weight: 700; }
+        .customer-register-benefit span { display: grid; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; border-radius: 10px; background: rgb(255 255 255 / 80%); color: #176b45; }
+        .customer-register-content { padding: 1.3rem; }
+        .customer-register-content h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
+        .customer-register-content > p { margin: 0 0 .9rem; color: #617269; font-size: .9rem; }
+        .customer-register-form { display: grid; gap: .15rem .85rem; }
+        .customer-register-form > p { min-width: 0; margin: .45rem 0; }
+        .customer-register-form label { display: block; margin-bottom: .35rem; color: #344a3d; font-size: .84rem; font-weight: 750; }
+        .customer-register-form input { width: 100%; min-height: 46px; padding: .65rem .75rem; border: 1px solid #cbd5ce; border-radius: 10px; background: #fbfcfa; color: #183329; font: inherit; }
+        .customer-register-form input:focus-visible, .customer-register-form button:focus-visible, .customer-register-links a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .customer-register-form input:focus { border-color: #176b45; background: #fff; box-shadow: 0 0 0 3px rgb(23 107 69 / 11%); }
+        .customer-register-error { margin: 0 0 .8rem; padding: .8rem .9rem; border-left: 4px solid #922f25; border-radius: 8px; background: #fff0ed; color: #70251e; }
+        .customer-register-form button { min-height: 48px; margin-top: .55rem; padding: .7rem 1rem; border: 0; border-radius: 10px; background: #176b45; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 5px 14px rgb(23 107 69 / 18%); }
+        .customer-register-form button:hover { background: #105236; }
+        .customer-register-links { margin: 1rem 0 0; padding-top: .85rem; border-top: 1px solid #e2eae4; color: #617269; font-size: .87rem; line-height: 1.8; }
+        .customer-register-links a { color: #176b45; font-weight: 750; text-decoration: none; }
+        .customer-register-links a:hover { text-decoration: underline; }
+        @media (min-width: 720px) {
+            .customer-register-page { padding-top: 3rem; }
+            .customer-register-layout { grid-template-columns: minmax(250px, .82fr) minmax(0, 1.18fr); }
+            .customer-register-intro { padding: 2.2rem; }
+            .customer-register-intro h1 { margin-top: .4rem; }
+            .customer-register-benefit { margin-top: 1.7rem; }
+            .customer-register-content { padding: 2rem; }
+            .customer-register-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .customer-register-form > p:nth-of-type(5) { grid-column: 1 / -1; }
+            .customer-register-form button { grid-column: 1 / -1; }
+        }
+    </style>
+    <main class="customer-register-page">
+        <div class="customer-register-layout">
+            <section class="customer-register-intro" aria-labelledby="customer-register-title">
+                <p class="customer-register-kicker">Good food, closer to home</p>
+                <h1 id="customer-register-title">Fresh finds start here.</h1>
+                <p>Create an account to discover neighborhood shops and keep your favorite fresh picks close at hand.</p>
+                <div class="customer-register-benefit"><span aria-hidden="true">✓</span>Shop local produce, all in one place</div>
+            </section>
+            <section class="customer-register-content" aria-labelledby="customer-register-form-title">
+                <nav class="registration-switcher" aria-label="Choose account type">
+                    <a href="{% url 'register' %}" aria-current="page">Customer signup</a>
+                    <a href="{% url 'vendor_register' %}">Vendor signup</a>
+                </nav>
+                <h2 id="customer-register-form-title">Create your customer account</h2>
+                <p>It only takes a moment to get started.</p>
+                {% if error %}
+                    <p class="customer-register-error" role="alert">{{ error }}</p>
+                {% endif %}
+                <form class="customer-register-form" method="post">
+                    {% csrf_token %}
+                    <p>
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" autocomplete="username" required>
+                    </p>
+                    <p>
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" autocomplete="email" required>
+                    </p>
+                    <p>
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" autocomplete="new-password" required>
+                    </p>
+                    <p>
+                        <label for="password-confirm">Confirm password</label>
+                        <input type="password" id="password-confirm" name="password_confirm" autocomplete="new-password" required>
+                    </p>
+                    <p>
+                        <label for="address">Address</label>
+                        <input type="text" id="address" name="address" autocomplete="street-address" required>
+                    </p>
+                    <p>
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" autocomplete="tel" required>
+                    </p>
+                    <button type="submit">Create account</button>
+                </form>
+                <p class="customer-register-links">
+                    Already have an account? <a href="{% url 'login' %}">Log in</a>
+                </p>
+            </section>
+        </div>
+    </main>
+{% endblock %}

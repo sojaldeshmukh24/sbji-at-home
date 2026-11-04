@@ -1,0 +1,142 @@
+{% extends "market/base.html" %}
+
+{% block title %}My Wishlist | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .wishlist-page {
+            --wishlist-green: #176b45;
+            --wishlist-ink: #17211b;
+            --wishlist-muted: #68736d;
+            --wishlist-line: #e6ebe7;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem 3rem;
+            color: var(--wishlist-ink);
+        }
+        .wishlist-page h1 { margin: 0 0 .35rem; font-size: 1.75rem; }
+        .wishlist-intro { margin: 0 0 1.25rem; color: var(--wishlist-muted); }
+        .wishlist-grid { display: grid; gap: .85rem; }
+        .wishlist-card {
+            display: grid;
+            grid-template-columns: 76px minmax(0, 1fr);
+            gap: .9rem;
+            padding: .9rem;
+            border: 1px solid var(--wishlist-line);
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 3px 14px rgb(20 45 30 / 5%);
+        }
+        .wishlist-card-unavailable { background: #fff9f8; }
+        .wishlist-image {
+            width: 76px;
+            height: 76px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #f6f8f6;
+        }
+        .wishlist-image-placeholder {
+            display: grid;
+            place-items: center;
+            color: var(--wishlist-muted);
+            font-size: .72rem;
+        }
+        .wishlist-details { min-width: 0; }
+        .wishlist-product-link { color: var(--wishlist-ink); font-weight: 700; text-decoration: none; }
+        .wishlist-meta { margin: .3rem 0; color: var(--wishlist-muted); font-size: .86rem; }
+        .wishlist-price { margin: .45rem 0; font-weight: 700; }
+        .wishlist-stock { color: var(--wishlist-muted); font-size: .86rem; }
+        .wishlist-out-of-stock {
+            display: inline-block;
+            margin-top: .35rem;
+            padding: .35rem .55rem;
+            border-radius: 8px;
+            background: #fff0ed;
+            color: #922f25;
+            font-size: .82rem;
+            font-weight: 700;
+        }
+        .wishlist-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .65rem; }
+        .wishlist-actions form { margin: 0; }
+        .wishlist-button {
+            min-height: 38px;
+            padding: .55rem .75rem;
+            border: 0;
+            border-radius: 10px;
+            font: inherit;
+            font-size: .86rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .wishlist-add-cart { background: var(--wishlist-green); color: #fff; }
+        .wishlist-remove { background: #f1f3f1; color: #38443c; }
+        .wishlist-empty {
+            padding: 2rem 1rem;
+            border: 1px dashed #cbd5ce;
+            border-radius: 16px;
+            color: var(--wishlist-muted);
+            text-align: center;
+        }
+        .wishlist-shop-link { display: inline-block; margin-top: 1rem; color: var(--wishlist-green); }
+        @media (min-width: 640px) {
+            .wishlist-page { padding: 2rem 1.25rem; }
+            .wishlist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .wishlist-card { grid-template-columns: 92px minmax(0, 1fr); gap: 1rem; padding: 1rem; }
+            .wishlist-image { width: 92px; height: 92px; }
+        }
+    </style>
+    <main class="wishlist-page">
+        <h1>My wishlist</h1>
+        <p class="wishlist-intro">Your saved listings, kept separate by shop.</p>
+        {% if wishlist_items %}
+            <div class="wishlist-grid">
+                {% for wishlist_item in wishlist_items %}
+                    {% with product=wishlist_item.product %}
+                        <article class="wishlist-card{% if product.stock < 1 %} wishlist-card-unavailable{% endif %}">
+                            {% if product.image %}
+                                <img class="wishlist-image" src="{{ product.image.url }}" alt="{{ product.name }}">
+                            {% else %}
+                                <div class="wishlist-image wishlist-image-placeholder" aria-hidden="true">No image</div>
+                            {% endif %}
+                            <div class="wishlist-details">
+                                <a class="wishlist-product-link" href="{% url 'product_detail' product.id %}">{{ product.name }}</a>
+                                <p class="wishlist-meta">{{ product.category.name }} · {{ product.units }}</p>
+                                {% if product.vendor %}
+                                    <p class="wishlist-meta">{{ product.vendor.name }}{% if product.vendor.shop_name %} · {{ product.vendor.shop_name }}{% endif %}</p>
+                                {% else %}
+                                    <p class="wishlist-meta">Vendor details are not available.</p>
+                                {% endif %}
+                                <p class="wishlist-price">{{ product.price }} / {{ product.units }}</p>
+                                {% if product.stock > 0 %}
+                                    <p class="wishlist-stock">{{ product.stock }} available</p>
+                                    <div class="wishlist-actions">
+                                        <form method="post" action="{% url 'add_to_cart' product.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button class="wishlist-button wishlist-add-cart" type="submit">Add to cart</button>
+                                        </form>
+                                        <form method="post" action="{% url 'remove_from_wishlist' product.id %}">
+                                            {% csrf_token %}
+                                            <button class="wishlist-button wishlist-remove" type="submit">Remove</button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="wishlist-out-of-stock">Out of stock</span>
+                                    <div class="wishlist-actions">
+                                        <form method="post" action="{% url 'remove_from_wishlist' product.id %}">
+                                            {% csrf_token %}
+                                            <button class="wishlist-button wishlist-remove" type="submit">Remove</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="wishlist-empty">Your wishlist is empty. Save listings you want to find later.</p>
+        {% endif %}
+        <a class="wishlist-shop-link" href="{% url 'product_list' %}">Browse products</a>
+    </main>
+{% endblock %}

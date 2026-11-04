@@ -1,0 +1,80 @@
+{% extends "market/base.html" %}
+
+{% block title %}Notifications | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .notifications-page { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .notifications-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+        .notifications-heading h1 { margin: 0 0 .25rem; font-size: 1.8rem; }
+        .notifications-heading p { margin: 0; color: #617269; }
+        .notifications-panel { padding: 1rem; border: 1px solid #e2eae4; border-radius: 10px; background: #fff; }
+        .notification-list { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+        .notification-item { min-width: 0; padding: .85rem; border: 1px solid #e2eae4; border-radius: 8px; background: #fff; }
+        .notification-item-unread { border-left: 4px solid #176b45; background: #f6faf6; }
+        .notification-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .45rem .8rem; }
+        .notification-title { margin: 0; font-size: 1rem; font-weight: 800; overflow-wrap: anywhere; }
+        .notification-state { display: inline-flex; align-items: center; min-height: 28px; padding: .25rem .5rem; border-radius: 6px; background: #f0f2f0; color: #435149; font-size: .76rem; font-weight: 750; }
+        .notification-item-unread .notification-state { background: #e8f4e9; color: #155d3c; }
+        .notification-message { margin: .4rem 0; line-height: 1.5; overflow-wrap: anywhere; }
+        .notification-date { margin: 0; color: #617269; font-size: .82rem; }
+        .notification-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .65rem; }
+        .notification-actions form { margin: 0; }
+        .notification-link, .notification-button { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: .55rem .75rem; border: 1px solid #176b45; border-radius: 7px; background: #176b45; color: #fff; font: inherit; font-size: .84rem; font-weight: 750; text-decoration: none; cursor: pointer; }
+        .notification-button { border-color: #cbd5ce; background: #fff; color: #183329; }
+        .notifications-page a:focus-visible, .notifications-page button:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .notifications-empty { padding: 2rem 1rem; border: 1px dashed #cbd5ce; border-radius: 8px; color: #617269; text-align: center; }
+        .notifications-empty strong { display: block; margin-bottom: .25rem; color: #183329; }
+        .notifications-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .6rem; margin-top: 1rem; }
+        .notifications-pagination a { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .75rem; border: 1px solid #cbd5ce; border-radius: 7px; color: #183329; font-weight: 700; text-decoration: none; }
+        @media (min-width: 640px) { .notifications-page { padding: 2rem 1.25rem 3.5rem; } .notifications-panel { padding: 1.2rem; } }
+    </style>
+    <main class="notifications-page">
+        <header class="notifications-heading">
+            <div>
+                <h1>Notifications</h1>
+                <p>{% if unread_notification_count %}{{ unread_notification_count }} unread notification{{ unread_notification_count|pluralize }}{% else %}You're all caught up.{% endif %}</p>
+            </div>
+            {% if unread_notification_count %}
+                <form method="post" action="{% url 'mark_all_notifications_read' %}">
+                    {% csrf_token %}
+                    <button class="notification-button" type="submit">Mark all as read</button>
+                </form>
+            {% endif %}
+        </header>
+        <section class="notifications-panel" aria-label="Your notifications">
+            {% if notifications %}
+                <ul class="notification-list">
+                    {% for notification in notifications %}
+                        <li class="notification-item{% if not notification.is_read %} notification-item-unread{% endif %}">
+                            <div class="notification-top">
+                                <h2 class="notification-title">{{ notification.title }}</h2>
+                                <span class="notification-state">{% if notification.is_read %}Read{% else %}Unread{% endif %}</span>
+                            </div>
+                            <p class="notification-message">{{ notification.message }}</p>
+                            <p class="notification-date"><time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|date:"j M Y, g:i A" }}</time></p>
+                            <div class="notification-actions">
+                                {% if notification.target_url %}<a class="notification-link" href="{{ notification.target_url }}">Open order</a>{% endif %}
+                                {% if not notification.is_read %}
+                                    <form method="post" action="{% url 'mark_notification_read' notification.id %}">
+                                        {% csrf_token %}
+                                        <button class="notification-button" type="submit">Mark as read</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="notifications-empty"><strong>No notifications yet</strong>You're all caught up. Important order updates will appear here.</div>
+            {% endif %}
+            {% if page_obj.has_other_pages %}
+                <nav class="notifications-pagination" aria-label="Notification pages">
+                    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+                    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+                </nav>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

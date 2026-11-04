@@ -1,0 +1,13 @@
+{% extends "market/base.html" %}
+
+{% block title %}Delete Delivery Address | SBJI@Home{% endblock %}
+
+{% block content %}
+    <h1>Delete delivery address?</h1>
+    <p>Are you sure you want to delete “{{ address.label }}” at {{ address.address_line_1 }}{% if address.address_line_2 %}, {{ address.address_line_2 }}{% endif %}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirm delete</button>
+    </form>
+    <p><a href="{% url 'customer_profile' %}">Cancel</a></p>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "market/base.html" %}
+
+{% block title %}Vendor Registration | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .vendor-auth-page { max-width: 1040px; margin: 0 auto; padding: 2rem 1rem 3.5rem; color: #183329; }
+        .vendor-auth-layout { display: grid; overflow: hidden; border: 1px solid #e2eae4; border-radius: 24px; background: #fff; box-shadow: 0 18px 55px rgb(20 45 30 / 9%); }
+        .vendor-auth-heading { position: relative; overflow: hidden; padding: 1.6rem; background: linear-gradient(145deg, #e8f4e9, #f6f7df 78%); }
+        .vendor-auth-heading::after { position: absolute; right: -3.5rem; bottom: -5.5rem; width: 14rem; height: 14rem; border: 1px solid rgb(23 107 69 / 13%); border-radius: 50%; box-shadow: 0 0 0 1.2rem rgb(23 107 69 / 5%), 0 0 0 2.4rem rgb(23 107 69 / 4%); content: ""; }
+        .vendor-auth-kicker { display: inline-flex; margin: 0 0 .9rem; padding: .4rem .65rem; border: 1px solid rgb(23 107 69 / 16%); border-radius: 999px; background: rgb(255 255 255 / 68%); color: #176b45; font-size: .75rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+        .vendor-auth-heading h1 { max-width: 16ch; margin: 0; font-size: clamp(1.9rem, 5vw, 2.55rem); letter-spacing: -.045em; line-height: 1.08; }
+        .vendor-auth-heading > p:not(.vendor-auth-kicker) { max-width: 38ch; margin: .75rem 0 0; color: #52665a; line-height: 1.65; }
+        .vendor-auth-highlight { display: flex; position: relative; z-index: 1; align-items: center; gap: .7rem; margin-top: 1.25rem; color: #355a43; font-size: .9rem; font-weight: 700; }
+        .vendor-auth-highlight span { display: grid; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; border-radius: 10px; background: rgb(255 255 255 / 80%); color: #176b45; }
+        .vendor-auth-content { padding: 1.3rem; }
+        .vendor-auth-content h2 { margin: 0 0 .25rem; font-size: 1.1rem; }
+        .vendor-auth-content > p { margin: 0 0 .9rem; color: #617269; font-size: .9rem; }
+        .vendor-auth-card { display: grid; gap: .15rem .85rem; }
+        .vendor-auth-card p { min-width: 0; margin: .45rem 0; }
+        .vendor-auth-card label { display: block; margin-bottom: .35rem; color: #344a3d; font-size: .84rem; font-weight: 750; }
+        .vendor-auth-card input:not([type="checkbox"]), .vendor-auth-card select, .vendor-auth-card textarea { width: 100%; min-height: 46px; padding: .65rem .75rem; border: 1px solid #cbd5ce; border-radius: 10px; background: #fbfcfa; color: #183329; font: inherit; }
+        .vendor-auth-card textarea { min-height: 96px; }
+        .vendor-auth-card input:focus, .vendor-auth-card select:focus, .vendor-auth-card textarea:focus { border-color: #176b45; background: #fff; box-shadow: 0 0 0 3px rgb(23 107 69 / 11%); }
+        .vendor-auth-card input:focus-visible, .vendor-auth-card select:focus-visible, .vendor-auth-card textarea:focus-visible, .vendor-auth-card button:focus-visible, .vendor-auth-links a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .vendor-auth-card .errorlist { margin: .35rem 0; padding-left: 1.2rem; color: #922f25; font-size: .83rem; }
+        .vendor-auth-card .helptext { display: block; margin-top: .3rem; color: #617269; font-size: .78rem; line-height: 1.45; }
+        .vendor-auth-card button { min-height: 48px; margin-top: .55rem; padding: .7rem 1rem; border: 0; border-radius: 10px; background: #176b45; color: #fff; font: inherit; font-weight: 800; cursor: pointer; box-shadow: 0 5px 14px rgb(23 107 69 / 18%); }
+        .vendor-auth-card button:hover { background: #105236; }
+        .vendor-auth-links { margin: 1rem 0 0 !important; padding-top: .85rem; border-top: 1px solid #e2eae4; color: #617269; font-size: .87rem; }
+        .vendor-auth-links a { color: #176b45; font-weight: 750; text-decoration: none; }
+        .vendor-auth-links a:hover { text-decoration: underline; }
+        @media (min-width: 720px) {
+            .vendor-auth-page { padding-top: 3rem; }
+            .vendor-auth-layout { grid-template-columns: minmax(250px, .82fr) minmax(0, 1.18fr); }
+            .vendor-auth-heading { padding: 2.2rem; }
+            .vendor-auth-heading h1 { margin-top: .4rem; }
+            .vendor-auth-highlight { margin-top: 1.7rem; }
+            .vendor-auth-content { padding: 2rem; }
+            .vendor-auth-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .vendor-auth-card > p:nth-of-type(5), .vendor-auth-card > p:nth-of-type(7), .vendor-auth-card > button { grid-column: 1 / -1; }
+        }
+    </style>
+    <main class="vendor-auth-page">
+        <div class="vendor-auth-layout">
+            <header class="vendor-auth-heading">
+                <p class="vendor-auth-kicker">Grow with your neighborhood</p>
+                <h1>Bring your shop to the table.</h1>
+                <p>Set up your shop to list products and manage marketplace orders.</p>
+                <div class="vendor-auth-highlight"><span aria-hidden="true">✓</span>One workspace for your listings and orders</div>
+            </header>
+            <section class="vendor-auth-content" aria-labelledby="vendor-register-form-title">
+                <nav class="registration-switcher" aria-label="Choose account type">
+                    <a href="{% url 'register' %}">Customer signup</a>
+                    <a href="{% url 'vendor_register' %}" aria-current="page">Vendor signup</a>
+                </nav>
+                <h2 id="vendor-register-form-title">Create your vendor account</h2>
+                <p>Tell us a little about you and your shop.</p>
+                <form class="vendor-auth-card" method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit">Create vendor account</button>
+                </form>
+                <p class="vendor-auth-links">Already registered? <a href="{% url 'login' %}">Log in</a></p>
+            </section>
+        </div>
+    </main>
+{% endblock %}

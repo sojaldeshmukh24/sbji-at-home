@@ -1,0 +1,41 @@
+{% extends "market/base.html" %}
+
+{% block title %}Find a Vendor | SBJI@Home{% endblock %}
+
+{% block content %}
+    <h1>Find a vendor</h1>
+    <form method="get">
+        {{ form.name.label_tag }}
+        {{ form.name }}
+        <button type="submit">Search</button>
+    </form>
+
+    {% if searched %}
+        {% if vendors %}
+            <h2>Matching vendors</h2>
+            <ul>
+                {% for vendor in vendors %}
+                    <li>
+                        <h3>{{ vendor.name }}</h3>
+                        {% if vendor.email %}<p>Email: {{ vendor.email }}</p>{% endif %}
+                        {% if vendor.phone %}<p>Phone: {{ vendor.phone }}</p>{% endif %}
+                        {% with products=vendor.products.all %}
+                            {% if products %}
+                                <h4>Products</h4>
+                                <ul>
+                                    {% for product in products %}
+                                        <li><a href="{% url 'product_detail' product.id %}">{{ product.name }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No products listed.</p>
+                            {% endif %}
+                        {% endwith %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No vendors match that name.</p>
+        {% endif %}
+    {% endif %}
+{% endblock %}

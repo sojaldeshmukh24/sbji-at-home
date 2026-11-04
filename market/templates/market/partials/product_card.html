@@ -1,0 +1,60 @@
+<article class="product-card{% if product.stock < 1 %} product-card-unavailable{% endif %}">
+    <a class="product-card-image-link" href="{% url 'product_detail' product.id %}" aria-label="View {{ product.name }}">
+        {% if product.image %}
+            <img class="product-card-image" src="{{ product.image.url }}" alt="{{ product.name }}">
+        {% else %}
+            <span class="product-card-image product-card-image-placeholder" aria-hidden="true">{% if 'fruit' in product.category.name|lower %}🍎{% elif 'root' in product.category.name|lower %}🥕{% else %}🥬{% endif %}</span>
+        {% endif %}
+    </a>
+    <div class="product-card-content">
+        <div class="product-card-heading">
+            <div>
+                <a class="product-card-name" href="{% url 'product_detail' product.id %}">{{ product.name }}</a>
+                <p class="product-card-category">Category: {{ product.category.name }}</p>
+            </div>
+            {% if user.is_authenticated and user.customer %}
+                {% if product.id in wishlist_product_ids %}
+                    <form method="post" action="{% url 'remove_from_wishlist' product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ wishlist_next|default:request.get_full_path }}">
+                        <button class="product-card-wishlist product-card-wishlist-active" type="submit" aria-label="Remove {{ product.name }} from wishlist" title="Remove from wishlist">♥</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'add_to_wishlist' product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ wishlist_next|default:request.get_full_path }}">
+                        <button class="product-card-wishlist" type="submit" aria-label="Add {{ product.name }} to wishlist" title="Add to wishlist">♡</button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <a class="product-card-wishlist" href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Log in to save {{ product.name }} to wishlist" title="Log in to save">♡</a>
+            {% endif %}
+        </div>
+        <p class="product-card-vendor">
+            {% if product.vendor %}
+                Vendor: {{ product.vendor.name }}{% if product.vendor.shop_name %} — {{ product.vendor.shop_name }}{% endif %}
+                {% if product.vendor.email %}<span class="visually-hidden"> Email: {{ product.vendor.email }}</span>{% endif %}
+                {% if product.vendor.phone %}<span class="visually-hidden"> Phone: {{ product.vendor.phone }}</span>{% endif %}
+            {% else %}
+                Local vendor
+            {% endif %}
+        </p>
+        <p class="product-card-price">₹{{ product.price }} <span>/ {{ product.units }}</span></p>
+        {% if product.stock > 0 %}
+            {% if product.stock <= 3 %}
+                <p class="product-card-stock product-card-low-stock">Low stock · Only {{ product.stock }} left · Available: {{ product.stock }} {{ product.units }}</p>
+            {% else %}
+                <p class="product-card-stock">Available: {{ product.stock }} {{ product.units }}</p>
+            {% endif %}
+            <form class="product-card-cart" method="post" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+                <label class="visually-hidden" for="quantity-{{ product.id }}-{{ card_key|default:'listing' }}">Quantity of {{ product.name }}</label>
+                <input id="quantity-{{ product.id }}-{{ card_key|default:'listing' }}" type="number" name="quantity" min="1" max="{{ product.stock }}" value="1" required aria-label="Quantity of {{ product.name }}">
+                <button type="submit" aria-label="Add {{ product.name }} to cart">Add to cart</button>
+            </form>
+        {% else %}
+            <p class="product-card-unavailable-label">Out of stock</p>
+            <button class="product-card-disabled" type="button" disabled aria-label="Out of stock">Out of stock</button>
+        {% endif %}
+    </div>
+</article>

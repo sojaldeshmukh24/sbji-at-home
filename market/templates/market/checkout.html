@@ -1,0 +1,234 @@
+{% extends "market/base.html" %}
+
+{% block title %}Checkout | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .checkout-page { max-width: 880px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #17211b; }
+        .checkout-intro { margin: -.35rem 0 1.25rem; color: #68736d; }
+        .checkout-section { margin: 1rem 0; padding: 1rem; border: 1px solid #e6ebe7; border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .checkout-section label { display: block; margin: .65rem 0 .3rem; color: #435149; font-size: .9rem; font-weight: 700; }
+        .checkout-section input:not([type="hidden"]), .checkout-section select, .checkout-section textarea {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            min-height: 44px;
+            padding: .6rem .7rem;
+            border: 1px solid #cbd5ce;
+            border-radius: 10px;
+            background: #fff;
+            color: #183329;
+            font: inherit;
+        }
+        .checkout-section input:focus-visible, .checkout-section select:focus-visible, .checkout-section textarea:focus-visible { border-color: #176b45; outline-color: rgb(23 107 69 / 45%); }
+        .checkout-section button {
+            min-height: 44px;
+            margin-top: .55rem;
+            padding: .6rem .85rem;
+            border: 1px solid #176b45;
+            border-radius: 10px;
+            background: #fff;
+            color: #105236;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .checkout-section .errorlist { margin: .35rem 0; padding: .55rem .7rem .55rem 2rem; border-radius: 9px; background: #fff0ed; color: #922f25; }
+        .checkout-section h2 { margin: 0 0 .65rem; font-size: 1.15rem; }
+        .checkout-section > p { color: #68736d; }
+        .checkout-address-details, .checkout-slot-details { padding: .75rem; border-radius: 10px; background: #f6f8f6; color: #435149; }
+        .checkout-order-items { margin: 0; padding: 0; list-style: none; }
+        .checkout-order-items li { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid #e6ebe7; }
+        .checkout-order-items li:last-child { border-bottom: 0; }
+        .checkout-order-total { display: flex; justify-content: space-between; gap: 1rem; margin: .8rem 0 0; font-size: 1.15rem; font-weight: 800; }
+        .checkout-payment {
+            max-width: 640px;
+            margin: 1rem 0;
+            padding: 1rem;
+            border: 1px solid #e6ebe7;
+            border-radius: 16px;
+            background: #fff;
+            color: #17211b;
+            box-shadow: 0 3px 14px rgb(20 45 30 / 5%);
+        }
+        .checkout-payment h2 { margin: 0 0 .35rem; font-size: 1.2rem; }
+        .checkout-payment-intro { margin: 0 0 .8rem; color: #68736d; }
+        .checkout-payment-option {
+            display: flex;
+            align-items: flex-start;
+            gap: .7rem;
+            padding: .9rem;
+            border: 1px solid #cbd5ce;
+            border-radius: 12px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .checkout-payment-option + .checkout-payment-option { margin-top: .6rem; }
+        .checkout-payment-option:has(input:checked) {
+            border-color: #176b45;
+            background: #f0f7f2;
+            box-shadow: 0 0 0 1px #176b45;
+        }
+        .checkout-payment-option input { margin-top: .25rem; accent-color: #176b45; }
+        .checkout-payment-title { display: block; font-weight: 700; }
+        .checkout-payment-note { display: block; margin-top: .2rem; color: #68736d; font-size: .88rem; }
+        .checkout-payment-option.is-disabled { color: #78827c; background: #f6f8f6; cursor: not-allowed; }
+        .checkout-payment-warning { margin: .7rem 0 0; color: #7a4c00; font-size: .88rem; }
+        .checkout-place-order {
+            min-height: 46px;
+            padding: .7rem 1.1rem;
+            border: 0;
+            border-radius: 11px;
+            background: #176b45;
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .checkout-place-order:disabled { background: #aab7ae; cursor: not-allowed; }
+        .checkout-back-link { display: inline-block; margin-top: 1rem; color: #105236; font-weight: 650; }
+        @media (min-width: 640px) {
+            .checkout-page { padding: 2rem 1.25rem 3rem; }
+            .checkout-section { padding: 1.25rem; }
+        }
+    </style>
+    <main class="checkout-page">
+    <h1>Checkout</h1>
+    <p class="checkout-intro">Confirm where and when to deliver, then choose how you intend to pay.</p>
+    <section class="checkout-section" aria-labelledby="delivery-address-heading">
+    <h2 id="delivery-address-heading">Delivery address</h2>
+    {% if delivery_addresses %}
+        <form method="post" action="{% url 'select_checkout_address' %}">
+            {% csrf_token %}
+            <label for="delivery-address">Choose a saved address</label>
+            <select id="delivery-address" name="address_id" required>
+                {% for address in delivery_addresses %}
+                    <option
+                        value="{{ address.id }}"
+                        {% if selected_delivery_address.id == address.id %}selected{% endif %}
+                    >
+                        {{ address.label }} — {{ address.address_line_1 }}, {{ address.city }}{% if address.is_default %} (Default){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit">Use this address</button>
+        </form>
+        {% if selected_delivery_address %}
+            <p class="checkout-address-details">
+                Selected for this checkout:
+                {{ selected_delivery_address.recipient_name }},
+                {{ selected_delivery_address.address_line_1 }}
+                {% if selected_delivery_address.address_line_2 %}, {{ selected_delivery_address.address_line_2 }}{% endif %},
+                {{ selected_delivery_address.city }}, {{ selected_delivery_address.state }}
+                {{ selected_delivery_address.postal_code }}
+                ({{ selected_delivery_address.phone }})
+            </p>
+        {% else %}
+            <p>Select and save an address for this checkout.</p>
+        {% endif %}
+    {% else %}
+        <p>No saved delivery addresses yet. Your profile address is shown above.</p>
+    {% endif %}
+    <h3>Add a new address</h3>
+    <form method="post" action="{% url 'add_checkout_address' %}">
+        {% csrf_token %}
+        {{ new_address_form.as_p }}
+        <button type="submit">Add and use this address</button>
+    </form>
+    </section>
+    <section class="checkout-section" aria-labelledby="delivery-time-heading">
+    <h2 id="delivery-time-heading">Delivery time</h2>
+    {% if delivery_windows_configured %}
+        <form method="post" action="{% url 'select_checkout_delivery_slot' %}">
+            {% csrf_token %}
+            <label for="delivery-slot">Choose a delivery date and time</label>
+            <select id="delivery-slot" name="slot_key" required>
+                <option value="">Select a delivery slot</option>
+                {% for day in delivery_slots %}
+                    <optgroup label="{{ day.date|date:'l, F j' }}">
+                        {% for slot in day.slots %}
+                            <option
+                                value="{{ slot.date|date:'Y-m-d' }}|{{ slot.window.id }}"
+                                {% if not slot.is_available %}disabled{% endif %}
+                                {% if selected_delivery_slot.date == slot.date and selected_delivery_slot.window.id == slot.window.id %}selected{% endif %}
+                            >
+                                {{ slot.window.name }} ({{ slot.window.start_time|time:'g:i A' }}–{{ slot.window.end_time|time:'g:i A' }})
+                                {% if slot.is_available %}— {{ slot.remaining }} spot(s) left{% else %}— Full{% endif %}
+                            </option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+            <button type="submit">Use this delivery slot</button>
+        </form>
+        {% if selected_delivery_slot %}
+            <p class="checkout-slot-details">
+                Selected:
+                {{ selected_delivery_slot.date|date:'l, F j' }},
+                {{ selected_delivery_slot.window.name }}
+                ({{ selected_delivery_slot.window.start_time|time:'g:i A' }}–{{ selected_delivery_slot.window.end_time|time:'g:i A' }})
+            </p>
+        {% else %}
+            <p>Select an available slot. Capacity is confirmed when the order is placed.</p>
+        {% endif %}
+    {% else %}
+        <p>No delivery windows are currently configured. Please try again later.</p>
+    {% endif %}
+    </section>
+    <section class="checkout-section" aria-labelledby="order-summary-heading">
+    <h2 id="order-summary-heading">Order summary</h2>
+    <ul class="checkout-order-items">
+        {% for item in items %}
+            <li><span>{{ item.quantity }} × {{ item.product.name }}</span><strong>₹{{ item.line_total|floatformat:2 }}</strong></li>
+        {% endfor %}
+    </ul>
+    <p class="checkout-order-total"><span>Total</span><span>₹{{ total|floatformat:2 }}</span></p>
+    </section>
+    <section class="checkout-payment" aria-labelledby="payment-heading">
+        <h2 id="payment-heading">Payment method</h2>
+        <p class="checkout-payment-intro">Choose how you intend to pay for this order. Total: <strong>₹{{ total|floatformat:2 }}</strong></p>
+        <label class="checkout-payment-option" for="payment-cod">
+            <input id="payment-cod" type="radio" name="payment_method" value="cod" required form="place-order-form">
+            <span>
+                <span class="checkout-payment-title">Cash on Delivery</span>
+                <span class="checkout-payment-note">Pay in cash when your order is delivered. No payment is collected now.</span>
+            </span>
+        </label>
+        <label class="checkout-payment-option{% if not razorpay_configured %} is-disabled{% endif %}" for="payment-online">
+            <input
+                id="payment-online"
+                type="radio"
+                name="payment_method"
+                value="online"
+                required
+                form="place-order-form"
+                {% if not razorpay_configured %}disabled{% endif %}
+            >
+            <span>
+                <span class="checkout-payment-title">Online Payment</span>
+                <span class="checkout-payment-note">Secure Razorpay checkout — test mode only.</span>
+            </span>
+        </label>
+        {% if not razorpay_configured %}
+            <p class="checkout-payment-warning">Online test payments are not configured. Cash on Delivery is available.</p>
+        {% endif %}
+    </section>
+    <form id="place-order-form" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="checkout_token" value="{{ checkout_token }}">
+        <button id="place-order-button" class="checkout-place-order" type="submit" data-loading-text="Placing order…" {% if not selected_delivery_slot %}disabled{% endif %}>Place order</button>
+    </form>
+    <a class="checkout-back-link" href="{% url 'cart' %}">Back to cart</a>
+    <script>
+        (() => {
+            const form = document.getElementById('place-order-form');
+            const button = document.getElementById('place-order-button');
+            const online = document.getElementById('payment-online');
+            form.addEventListener('change', () => {
+                button.textContent = online.checked ? 'Continue to secure payment' : 'Place order';
+            });
+        })();
+    </script>
+    </main>
+{% endblock %}

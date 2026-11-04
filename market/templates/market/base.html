@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}SBJI@Home{% endblock %}</title>
+    <style>
+        :root { color-scheme: light; --site-ink: #14291e; --site-green: #176143; --site-muted: #718078; --site-line: #e5eee8; --site-mint: #eff7f2; --site-deep: #0d3323; }
+        * { box-sizing: border-box; }
+        img { max-width: 100%; }
+        :focus-visible { outline: 3px solid #d18a00; outline-offset: 3px; }
+        button, input, select, textarea { font: inherit; }
+        body { margin: 0; background: #f7faf8; color: var(--site-ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        .site-announcement { min-height: 34px; display: flex; align-items: center; justify-content: center; padding: .35rem 1rem; background: #155b3e; color: #fff; text-align: center; font-size: .76rem; font-weight: 650; letter-spacing: .01em; }
+        .site-announcement span { color: #cde8d7; }
+        .site-announcement-link { color: #cde8d7; text-underline-offset: 3px; }
+        .site-header { position: sticky; top: 0; z-index: 10; border-bottom: 1px solid var(--site-line); background: rgb(255 255 255 / 97%); backdrop-filter: blur(12px); }
+        .site-header-inner { display: flex; flex-wrap: wrap; align-items: center; gap: .85rem 1.1rem; max-width: 1460px; margin: 0 auto; padding: .72rem 1.15rem; }
+        .site-brand { display: inline-flex; align-items: center; gap: .6rem; color: var(--site-ink); text-decoration: none; }
+        .site-brand-mark { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #155b3e; color: #fff; font-size: 1.25rem; }
+        .site-brand-name { display: block; color: #155b3e; font-size: 1.08rem; font-weight: 850; letter-spacing: -.045em; }
+        .site-brand-tagline { display: block; margin-top: .05rem; color: var(--site-muted); font-size: .66rem; letter-spacing: .04em; text-transform: uppercase; }
+        .site-delivery { display: grid; min-width: 132px; gap: .08rem; padding: .45rem .8rem; border: 1px solid var(--site-line); border-radius: 12px; color: var(--site-muted); font-size: .64rem; letter-spacing: .04em; text-decoration: none; }
+        .site-delivery strong { overflow: hidden; max-width: 180px; color: var(--site-ink); font-size: .88rem; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+        .site-search { display: flex; flex: 1 1 250px; min-width: 150px; max-width: 620px; align-items: center; gap: .4rem; padding: .25rem .3rem .25rem .9rem; border: 1px solid #dce9e0; border-radius: 999px; background: #f5faf6; }
+        .site-search:focus-within { border-color: var(--site-green); background: #fff; box-shadow: 0 0 0 3px rgb(23 107 69 / 12%); }
+        .site-search input { width: 100%; min-width: 0; min-height: 38px; border: 0; outline: 0; background: transparent; color: var(--site-ink); font: inherit; font-size: .86rem; }
+        .site-search input::placeholder { color: #718077; opacity: 1; }
+        .site-search button { min-width: 38px; min-height: 38px; border: 0; border-radius: 50%; background: var(--site-green); color: #fff; font-size: 1.05rem; cursor: pointer; }
+        .site-nav { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .22rem; margin-left: auto; }
+        .site-nav a, .site-nav span { padding: .52rem .62rem; border-radius: 9px; color: var(--site-ink); font-size: .82rem; font-weight: 680; text-decoration: none; white-space: nowrap; }
+        .site-nav a:hover { background: #f0f6f1; color: var(--site-green); }
+        .site-nav .site-nav-primary { background: var(--site-green); color: #fff; }
+        .site-nav .site-nav-primary:hover { background: #105236; color: #fff; }
+        .site-nav .site-cart { position: relative; display: inline-flex; align-items: center; gap: .35rem; border-radius: 999px; background: #e8f5ee; color: #155b3e; }
+        .site-cart-count { display: inline-grid; min-width: 20px; height: 20px; place-items: center; padding: 0 .3rem; border-radius: 999px; background: #155b3e; color: #fff; font-size: .7rem; font-weight: 800; }
+        .site-footer { margin-top: 2.5rem; border-top: 1px solid var(--site-line); background: var(--site-deep); color: #e7f1ea; }
+        .site-footer-highlight { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; padding: 2rem max(1rem, calc((100vw - 1390px) / 2)); background: #155b3e; }
+        .site-footer-highlight h2 { max-width: 22ch; margin: 0; font-size: clamp(1.35rem, 3vw, 1.9rem); letter-spacing: -.035em; }
+        .site-footer-highlight p { max-width: 52ch; margin: .4rem 0 0; color: #d4e8dc; font-size: .9rem; line-height: 1.6; }
+        .site-footer-benefits { display: flex; flex-wrap: wrap; gap: .75rem 1.4rem; margin: 0; padding: 0; list-style: none; color: #e4f0e8; font-size: .82rem; font-weight: 650; }
+        .site-footer-benefits li::before { margin-right: .4rem; color: #9cd5b1; content: "✓"; }
+        .site-footer-inner { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; max-width: 1460px; margin: 0 auto; padding: 2.4rem 1.15rem; color: #a9c1b1; font-size: .82rem; }
+        .site-footer-brand { max-width: 28ch; line-height: 1.7; }
+        .site-footer-brand strong { display: block; margin-bottom: .4rem; color: #fff; font-size: 1.05rem; }
+        .site-footer-column h2 { margin: 0 0 .8rem; color: #fff; font-size: .9rem; }
+        .site-footer-links { display: grid; justify-items: start; gap: .55rem; }
+        .site-footer a { color: #a9c1b1; font-weight: 600; text-decoration: none; }
+        .site-footer a:hover { color: #fff; }
+        .site-footer-bottom { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .6rem 1rem; max-width: 1460px; margin: 0 auto; padding: 1rem 1.15rem; border-top: 1px solid rgb(255 255 255 / 10%); color: #8ba796; font-size: .75rem; }
+        .site-footer-minimal { max-width: 1460px; margin: 0 auto; padding: 1.2rem 1rem; color: #a9c1b1; font-size: .82rem; }
+        .registration-switcher { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .3rem; margin-bottom: 1.2rem; padding: .3rem; border: 1px solid var(--site-line); border-radius: 12px; background: #f4f8f4; }
+        .registration-switcher a { display: flex; min-height: 42px; align-items: center; justify-content: center; padding: .55rem .7rem; border-radius: 9px; color: var(--site-muted); font-size: .86rem; font-weight: 750; text-align: center; text-decoration: none; }
+        .registration-switcher a:hover { background: #e8f4e9; color: var(--site-green); }
+        .registration-switcher a[aria-current="page"] { background: #176b45; color: #fff; box-shadow: 0 2px 7px rgb(20 45 30 / 12%); }
+        .registration-switcher a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+        .product-card { min-width: 0; height: 100%; overflow: hidden; border: 1px solid var(--site-line); border-radius: 18px; background: #fff; box-shadow: 0 4px 16px rgb(20 45 30 / 5%); transition: transform .18s ease, box-shadow .18s ease; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgb(20 45 30 / 10%); }
+        .product-card-unavailable { background: #fffafa; }
+        .product-card-image-link { display: block; overflow: hidden; background: #f2f6ef; text-decoration: none; }
+        .product-card-image { display: grid; width: 100%; height: 190px; place-items: center; object-fit: cover; background: linear-gradient(135deg, #f6f8ed, #e7f1df); color: var(--site-muted); font-size: .82rem; transition: transform .25s ease; }
+        .product-card:hover .product-card-image { transform: scale(1.025); }
+        .product-card-image-placeholder { align-content: center; justify-items: center; font-size: 4.4rem; }
+        .product-card-content { display: flex; min-height: 226px; flex-direction: column; padding: .9rem; }
+        .product-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+        .product-card-name { display: -webkit-box; overflow: hidden; min-height: 2.55em; color: var(--site-ink); font-weight: 800; line-height: 1.28; text-decoration: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+        .product-card-category { margin: .35rem 0 .1rem; color: #748279; font-size: .67rem; font-weight: 750; letter-spacing: .055em; text-transform: uppercase; }
+        .product-card-vendor { overflow: hidden; margin: .25rem 0; color: var(--site-muted); font-size: .78rem; text-overflow: ellipsis; white-space: nowrap; }
+        .product-card-stock { margin: .3rem 0; color: #426c50; font-size: .74rem; }
+        .product-card-wishlist { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid var(--site-line); border-radius: 50%; background: #fff; color: #47564d; font-size: 1.25rem; line-height: 1; text-decoration: none; cursor: pointer; }
+        .product-card-wishlist:focus-visible, .product-card-cart button:focus-visible, .product-card-cart input:focus-visible, .product-card-disabled:focus-visible, .site-nav a:focus-visible, .site-search button:focus-visible, .site-search input:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .product-card-wishlist-active { border-color: #f4c5c0; background: #fff0ed; color: #a33429; }
+        .product-card-wishlist form { margin: 0; }
+        .product-card-price { margin: auto 0 .15rem; padding-top: .3rem; color: var(--site-green); font-size: 1.12rem; font-weight: 850; }
+        .product-card-price span { color: var(--site-muted); font-size: .76rem; font-weight: 500; }
+        .product-card-low-stock { color: #965a00; font-weight: 700; }
+        .product-card-cart { display: flex; gap: .4rem; margin-top: .5rem; }
+        .product-card-cart input { width: 3.5rem; min-height: 42px; padding: .35rem; border: 1px solid #cbd5ce; border-radius: 9px; font: inherit; text-align: center; }
+        .product-card-cart button, .product-card-disabled { min-height: 42px; flex: 1; padding: .5rem .65rem; border: 0; border-radius: 9px; background: var(--site-green); color: #fff; font: inherit; font-size: .83rem; font-weight: 750; cursor: pointer; }
+        .product-card-disabled { margin-top: .4rem; background: #e7eae7; color: #667169; cursor: not-allowed; }
+        .product-card-unavailable-label { display: inline-flex; margin: .4rem 0 0; padding: .33rem .5rem; border-radius: 8px; background: #fff0ed; color: #922f25; font-size: .78rem; font-weight: 750; }
+        @media (prefers-reduced-motion: reduce) { .product-card, .product-card-image { transition: none; } }
+        .site-messages { max-width: 1200px; margin: .75rem auto; padding: 0 1rem; }
+        .site-messages ul { margin: 0; padding: .7rem 1rem .7rem 2rem; border-radius: 12px; background: #fff4d6; }
+        form[aria-busy="true"] button[aria-disabled="true"] { cursor: wait; opacity: .72; }
+        @media (min-width: 1320px) {
+            .site-header-inner { display: grid; grid-template-columns: auto auto minmax(220px, 1fr) auto; gap: .8rem; }
+            .site-search { max-width: none; }
+            .site-nav { margin-left: 0; gap: .05rem; }
+        }
+        @media (max-width: 1119px) {
+            .site-header-inner { gap: .7rem .85rem; }
+            .site-brand { margin-right: auto; }
+            .site-search { order: 3; flex-basis: 100%; max-width: none; }
+            .site-nav { flex: 1 1 100%; order: 4; justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+            .site-nav a, .site-nav span { flex: 0 0 auto; }
+        }
+        @media (min-width: 1000px) and (max-width: 1319px) {
+            .site-header-inner { display: grid; grid-template-columns: auto auto minmax(220px, 1fr); gap: .7rem .85rem; }
+            .site-brand, .site-search { margin: 0; }
+            .site-search { max-width: none; }
+            .site-nav { grid-column: 1 / -1; order: 4; margin: 0; }
+        }
+        @media (max-width: 680px) {
+            .site-announcement { font-size: .68rem; }
+            .site-header-inner { gap: .65rem; padding: .6rem .8rem; }
+            .site-delivery { margin-left: auto; padding: .35rem .55rem; }
+            .site-delivery strong { max-width: 150px; }
+            .site-nav a, .site-nav span { flex: 0 0 auto; padding: .5rem .6rem; }
+            .site-footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 1.7rem 1rem; }
+            .site-footer-highlight { padding: 1.5rem 1rem; }
+        }
+        @media (max-width: 390px) { .site-brand-tagline { display: none; } .site-brand-mark { width: 36px; height: 36px; } .site-nav a, .site-nav span { padding: .45rem .5rem; font-size: .78rem; } }
+        .home-layout .site-header-inner { display: grid; grid-template-columns: auto auto minmax(130px, 1fr) auto; gap: .7rem; max-width: 1360px; }
+        .home-layout .site-brand { margin: 0; }
+        .home-layout .site-search { min-width: 0; max-width: none; }
+        .home-layout .site-nav { grid-column: auto; flex: 0 1 auto; flex-wrap: nowrap; gap: .08rem; margin: 0; overflow: visible; }
+        .home-layout .site-nav a, .home-layout .site-nav span { padding: .5rem .55rem; font-size: .78rem; }
+        .home-layout .site-nav .site-cart { white-space: nowrap; }
+        .home-layout .site-nav .site-nav-primary { white-space: nowrap; }
+        @media (max-width: 760px) {
+            .home-layout .site-header-inner { grid-template-columns: auto auto minmax(0, 1fr) auto; gap: .45rem; padding: .65rem .75rem; }
+            .home-layout .site-brand-tagline { display: none; }
+            .home-layout .site-brand-mark { width: 36px; height: 36px; }
+            .home-layout .site-delivery { min-width: 0; margin: 0; padding: .35rem .45rem; }
+            .home-layout .site-delivery strong { max-width: 88px; font-size: .75rem; }
+            .home-layout .site-search { grid-column: 3; grid-row: 1; padding-left: .6rem; }
+            .home-layout .site-search input { min-height: 34px; font-size: .72rem; }
+            .home-layout .site-search button { min-width: 32px; min-height: 32px; }
+            .home-layout .site-nav { grid-column: 4; grid-row: 1; }
+            .home-layout .site-nav a, .home-layout .site-nav span { padding: .42rem; font-size: .7rem; }
+            .home-layout .site-nav .site-cart { gap: .15rem; }
+            .home-layout .site-nav .site-cart-count { min-width: 17px; height: 17px; font-size: .62rem; }
+        }
+        @media (max-width: 520px) {
+            .home-layout .site-header-inner { grid-template-columns: auto auto 1fr; }
+            .home-layout .site-search { grid-column: 1 / 3; grid-row: 2; }
+            .home-layout .site-nav { grid-column: 3; grid-row: 1 / 3; justify-self: end; }
+        }
+    </style>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% if not user.vendor_profile and request.path|slice:":9" != "/vendors/" or not user.vendor_profile and request.path == "/vendors/" %}
+    <div class="site-announcement">
+        <span aria-hidden="true">🌱</span>&nbsp; Welcome to SBJI@Home! Fresh vegetables &amp; fruits from local sellers.&nbsp;
+        <a class="site-announcement-link" href="{% url 'product_list' %}">Order now →</a>
+    </div>
+    {% endif %}
+    <header class="site-header">
+        <div class="site-header-inner">
+            {% if request.path|slice:":9" == "/vendors/" and request.path != "/vendors/" %}
+            <a class="site-brand" href="{% url 'vendor_dashboard' %}" aria-label="SBJI at Home, vendor dashboard">
+                <span class="site-brand-mark" aria-hidden="true">🌱</span>
+                <span>
+                    <span class="site-brand-name">SBJI@Home</span>
+                    <span class="site-brand-tagline">Vendor workspace</span>
+                </span>
+            </a>
+            {% else %}
+            <a class="site-brand" href="{% url 'home' %}" aria-label="SBJI at Home, home">
+                <span class="site-brand-mark" aria-hidden="true">🌱</span>
+                <span>
+                    <span class="site-brand-name">SBJI@Home</span>
+                    <span class="site-brand-tagline">Fresh picks, thoughtfully delivered</span>
+                </span>
+            </a>
+            {% endif %}
+            {% if request.path|slice:":9" != "/vendors/" or request.path == "/vendors/" %}
+            {% if not user.is_authenticated or not user.vendor_profile %}
+            <a class="site-delivery" href="{% url header_delivery_area_url %}" aria-label="Delivery area: {{ header_delivery_area }}">
+                <span>DELIVER TO</span>
+                <strong>{{ header_delivery_area }}</strong>
+            </a>
+            <form class="site-search" action="{% url 'product_list' %}" method="get" role="search" data-loading-state>
+                <label class="visually-hidden" for="site-search-input">Search products</label>
+                <input id="site-search-input" type="search" name="name" value="{{ request.GET.name|default:'' }}" placeholder="Search for vegetables, fruits and more..." autocomplete="off" list="marketplace-search-suggestions">
+                {% if request.resolver_match.url_name == 'product_list' %}
+                    <input type="hidden" name="category" value="{{ request.GET.category|default:'' }}">
+                    <input type="hidden" name="availability" value="{{ request.GET.availability|default:'' }}">
+                    <input type="hidden" name="sort" value="{{ request.GET.sort|default:'relevance' }}">
+                {% endif %}
+                {% if search_suggestions or categories %}
+                    <datalist id="marketplace-search-suggestions">
+                        {% for suggestion in search_suggestions %}
+                            <option value="{{ suggestion }}"></option>
+                        {% endfor %}
+                        {% for category in categories %}
+                            <option value="{{ category.name }}"></option>
+                        {% endfor %}
+                    </datalist>
+                {% endif %}
+                <button type="submit" aria-label="Search">⌕</button>
+            </form>
+            {% endif %}
+            {% endif %}
+            {% if request.path|slice:":9" != "/vendors/" or request.path == "/vendors/" %}
+            <nav class="site-nav" aria-label="Main navigation">
+                {% if not user.is_authenticated or not user.vendor_profile %}
+                {% if request.path != "/" %}
+                <a href="{% url 'product_list' %}">Shop</a>
+                <a href="{% url 'vendor_search' %}">Local shops</a>
+                {% endif %}
+                {% if user.is_authenticated and user.customer %}
+                    <a href="{% url 'wishlist' %}" aria-label="Wishlist">♡{% if request.path != "/" %} Wishlist{% endif %}</a>
+                {% elif not user.is_authenticated %}
+                    <a href="{% url 'login' %}?next={% url 'wishlist' %}" aria-label="Wishlist">♡{% if request.path != "/" %} Wishlist{% endif %}</a>
+                {% endif %}
+                <a class="site-cart" href="{% url 'cart' %}" aria-label="My Cart, {{ header_cart_count }} items">
+                    <span aria-hidden="true">🛒</span> My Cart
+                    <span class="site-cart-count">{{ header_cart_count }}</span>
+                </a>
+                {% endif %}
+                {% if user.is_authenticated %}
+                    <a href="{% url 'notification_center' %}" aria-label="Notifications, {{ header_unread_notification_count }} unread">
+                        Notifications{% if header_unread_notification_count %} <span class="site-cart-count">{{ header_unread_notification_count }}</span>{% endif %}
+                    </a>
+                    {% if user.vendor_profile %}
+                        <a href="{% url 'vendor_dashboard' %}">Vendor dashboard</a>
+                    {% else %}
+                        <span>Hi, {{ user.username }}</span>
+                    {% endif %}
+                    {% if user.customer %}
+                        <a href="{% url 'customer_profile' %}">My profile</a>
+                        <a href="{% url 'order_history' %}">My orders</a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}">Logout</a>
+                {% else %}
+                    <a href="{% url 'login' %}">Login</a>
+                    <a class="site-nav-primary" href="{% url 'register' %}">Join us</a>
+                {% endif %}
+            </nav>
+            {% endif %}
+        </div>
+    </header>
+    {% if messages %}
+        <div class="site-messages" role="status">
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+    <footer class="site-footer">
+        {% if not user.vendor_profile and request.path|slice:":9" != "/vendors/" or not user.vendor_profile and request.path == "/vendors/" %}
+        <section class="site-footer-highlight" aria-label="About SBJI at Home">
+            <div>
+                <h2>Fresh groceries from your neighborhood.</h2>
+                <p>Discover vegetables and fruits from neighborhood sellers and shop the listings that fit your table.</p>
+            </div>
+            <ul class="site-footer-benefits">
+                <li>Local sellers</li>
+                <li>Browse current stock</li>
+                <li>Order online</li>
+            </ul>
+        </section>
+        <div class="site-footer-inner">
+            <div class="site-footer-brand">
+                <strong>🌱 SBJI@Home</strong>
+                Your neighborhood marketplace for fresh vegetables and fruits from local sellers.
+            </div>
+            <nav class="site-footer-column" aria-label="Quick links">
+                <h2>Quick links</h2>
+                <div class="site-footer-links">
+                    <a href="{% url 'home' %}">Home</a>
+                    <a href="{% url 'product_list' %}">Shop products</a>
+                    <a href="{% url 'vendor_search' %}">Local shops</a>
+                </div>
+            </nav>
+            <nav class="site-footer-column" aria-label="Customer links">
+                <h2>Customer</h2>
+                <div class="site-footer-links">
+                    <a href="{% url 'cart' %}">My cart</a>
+                    {% if user.is_authenticated and user.customer %}
+                        <a href="{% url 'customer_profile' %}">My account</a>
+                        <a href="{% url 'order_history' %}">My orders</a>
+                        <a href="{% url 'wishlist' %}">Wishlist</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Log in</a>
+                        <a href="{% url 'register' %}">Customer signup</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+        <div class="site-footer-bottom">
+            <span>© {% now "Y" %} SBJI@Home · Fresh picks from local shops.</span>
+            <span>Made for neighborhood shopping.</span>
+        </div>
+        {% else %}
+            <div class="site-footer-minimal">
+                © {% now "Y" %} SBJI@Home{% if user.vendor_profile %} · Vendor workspace{% endif %}
+            </div>
+        {% endif %}
+    </footer>
+    <script>
+        document.addEventListener('submit', function (event) {
+            const form = event.target;
+            if (!(form instanceof HTMLFormElement)) return;
+            if (form.dataset.submitting === 'true') {
+                event.preventDefault();
+                return;
+            }
+            const submitter = event.submitter;
+            if (!(submitter instanceof HTMLButtonElement) || submitter.type !== 'submit') return;
+            if (form.method.toLowerCase() !== 'post' && !form.hasAttribute('data-loading-state')) return;
+
+            form.dataset.submitting = 'true';
+            form.setAttribute('aria-busy', 'true');
+            submitter.setAttribute('aria-disabled', 'true');
+            const originalText = submitter.textContent.trim();
+            submitter.textContent = submitter.dataset.loadingText || 'Working…';
+
+            let status = form.querySelector('[data-form-submit-status]');
+            if (!status) {
+                status = document.createElement('span');
+                status.className = 'visually-hidden';
+                status.dataset.formSubmitStatus = 'true';
+                status.setAttribute('role', 'status');
+                status.setAttribute('aria-live', 'polite');
+                form.append(status);
+            }
+            status.textContent = submitter.dataset.loadingText
+                ? `${submitter.dataset.loadingText} Please wait.`
+                : `${originalText || 'Request'} is being processed. Please wait.`;
+        });
+    </script>
+</body>
+</html>

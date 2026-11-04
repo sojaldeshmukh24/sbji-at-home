@@ -1,0 +1,39 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}Customer {{ customer.user.username }}{% endblock %}
+{% block admin_heading %}Customer account{% endblock %}
+{% block admin_description %}Marketplace activity and contact information for this customer.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-labelledby="customer-details-heading">
+        <h2 id="customer-details-heading">{{ customer.user.get_full_name|default:customer.user.username }}</h2>
+        <dl class="admin-definition-list">
+            <div><dt>Username</dt><dd>{{ customer.user.username }}</dd></div>
+            <div><dt>Email</dt><dd>{{ customer.user.email|default:"Not provided" }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ customer.phone|default:"Not provided" }}</dd></div>
+            <div><dt>Account</dt><dd>{% if customer.user.is_active %}Active{% else %}Inactive{% endif %}</dd></div>
+            <div><dt>Registered</dt><dd>{{ customer.user.date_joined|date:"j M Y, g:i A" }}</dd></div>
+            <div><dt>Orders</dt><dd>{{ order_count }}</dd></div>
+            <div><dt>Profile address</dt><dd>{{ customer.address|default:"Not provided" }}</dd></div>
+        </dl>
+        {% if perms.auth.change_user %}<p><a class="admin-secondary-link" href="{% url 'admin:auth_user_change' customer.user_id %}">Manage account</a></p>{% endif %}
+    </section>
+    <section class="admin-panel" aria-labelledby="customer-orders-heading">
+        <h2 id="customer-orders-heading">Order history</h2>
+        {% if orders %}
+            <div class="admin-table-wrap"><table class="admin-table">
+                <thead><tr><th scope="col">Order</th><th scope="col">Date</th><th scope="col">Items</th><th scope="col">Total</th><th scope="col">Payment</th><th scope="col">Status</th><th scope="col">Details</th></tr></thead>
+                <tbody>{% for order in orders %}<tr>
+                    <td data-label="Order">#{{ order.id }}</td>
+                    <td data-label="Date">{{ order.order_date|date:"j M Y, g:i A" }}</td>
+                    <td data-label="Items">{{ order.admin_item_count }}</td>
+                    <td data-label="Total">₹{{ order.admin_order_total|floatformat:2 }}</td>
+                    <td data-label="Payment">{{ order.get_payment_method_display|default:"Not recorded" }} · {{ order.get_payment_status_display }}</td>
+                    <td data-label="Status">{{ order.get_status_display|default:"Unspecified" }}</td>
+                    <td data-label="Details"><a href="{% url 'market_admin_order_detail' order.id %}">View order</a></td>
+                </tr>{% endfor %}</tbody>
+            </table></div>
+            {% if order_count > 20 %}<p class="admin-muted">Showing the latest 20 orders.</p>{% endif %}
+        {% else %}<div class="admin-empty"><strong>No orders found</strong>This customer has not placed any marketplace orders.</div>{% endif %}
+    </section>
+{% endblock %}

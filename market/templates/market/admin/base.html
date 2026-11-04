@@ -1,0 +1,83 @@
+{% extends "market/base.html" %}
+
+{% block title %}{% block admin_title %}Marketplace Admin{% endblock %} | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .market-admin { max-width: 1320px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .admin-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+        .admin-heading h1 { margin: 0 0 .3rem; font-size: 1.8rem; }
+        .admin-heading p { margin: 0; color: #617269; }
+        .admin-nav { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: 1rem; padding: .45rem; border: 1px solid #e2eae4; border-radius: 10px; background: #fff; }
+        .admin-nav a { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .7rem; border-radius: 7px; color: #183329; font-size: .86rem; font-weight: 700; text-decoration: none; }
+        .admin-nav a:hover, .admin-nav a[aria-current="page"] { background: #e8f4e9; color: #155d3c; }
+        .market-admin a:focus-visible, .market-admin button:focus-visible, .market-admin input:focus-visible, .market-admin select:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .admin-panel { min-width: 0; margin-top: 1rem; padding: 1rem; border: 1px solid #e2eae4; border-radius: 10px; background: #fff; }
+        .admin-panel h2 { margin: 0 0 .75rem; font-size: 1.12rem; }
+        .admin-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+        .admin-summary-grid { display: grid; gap: 1rem; }
+        .admin-stat { min-width: 0; padding: .85rem; border: 1px solid #e2eae4; border-radius: 8px; background: #fff; }
+        .admin-stat-label { display: block; color: #617269; font-size: .8rem; }
+        .admin-stat-value { display: block; margin-top: .2rem; color: #176b45; font-size: 1.35rem; font-weight: 800; overflow-wrap: anywhere; }
+        .admin-status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: .55rem; }
+        .admin-status-item { display: flex; justify-content: space-between; gap: .7rem; padding: .65rem; border-bottom: 1px solid #e2eae4; }
+        .admin-status-item strong { overflow-wrap: anywhere; }
+        .admin-table-wrap { width: 100%; overflow-x: auto; }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th, .admin-table td { padding: .7rem .55rem; border-bottom: 1px solid #e2eae4; text-align: left; vertical-align: top; }
+        .admin-table th { color: #617269; font-size: .78rem; }
+        .admin-table td { overflow-wrap: anywhere; }
+        .admin-table a { color: #176b45; font-weight: 700; text-decoration: none; }
+        .admin-table a:hover { text-decoration: underline; }
+        .admin-filters { display: flex; flex-wrap: wrap; align-items: end; gap: .65rem; margin: 0 0 .85rem; }
+        .admin-filter { display: grid; min-width: 150px; gap: .25rem; color: #435149; font-size: .8rem; font-weight: 700; }
+        .admin-filter input, .admin-filter select { width: 100%; min-height: 42px; padding: .5rem .6rem; border: 1px solid #cbd5ce; border-radius: 7px; background: #fff; color: #183329; font: inherit; font-weight: 400; }
+        .admin-button, .admin-secondary-link { display: inline-flex; min-height: 42px; align-items: center; justify-content: center; padding: .55rem .75rem; border: 1px solid #176b45; border-radius: 7px; background: #176b45; color: #fff !important; font: inherit; font-size: .85rem; font-weight: 750; text-decoration: none; cursor: pointer; }
+        .admin-secondary-link { border-color: #cbd5ce; background: #fff; color: #183329 !important; }
+        .admin-empty { padding: 1.5rem .8rem; border: 1px dashed #cbd5ce; border-radius: 8px; color: #617269; text-align: center; }
+        .admin-empty strong { display: block; margin-bottom: .25rem; color: #183329; }
+        .admin-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin-top: .85rem; }
+        .admin-pagination p { margin: 0; color: #617269; font-size: .85rem; }
+        .admin-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+        .admin-definition-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem 1rem; margin: 0; }
+        .admin-definition-list div { min-width: 0; }
+        .admin-definition-list dt { color: #617269; font-size: .78rem; }
+        .admin-definition-list dd { margin: .15rem 0 0; font-weight: 650; overflow-wrap: anywhere; }
+        .admin-item-list { display: grid; gap: .55rem; margin: 0; padding: 0; list-style: none; }
+        .admin-item { display: flex; flex-wrap: wrap; align-items: start; justify-content: space-between; gap: .6rem; padding: .75rem; border-bottom: 1px solid #e2eae4; }
+        .admin-muted { color: #617269; }
+        @media (min-width: 640px) { .market-admin { padding: 2rem 1.25rem 3.5rem; } .admin-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } .admin-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .admin-panel { padding: 1.2rem; } }
+        @media (max-width: 600px) {
+            .admin-table-wrap { overflow: visible; }
+            .admin-table, .admin-table tbody { display: block; }
+            .admin-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
+            .admin-table tr { display: block; margin: .65rem 0; padding: .4rem .7rem; border: 1px solid #e2eae4; border-radius: 8px; }
+            .admin-table td { display: grid; grid-template-columns: minmax(6.5rem, .7fr) minmax(0, 1.3fr); gap: .65rem; padding: .5rem 0; border-bottom: 1px solid #edf1ed; }
+            .admin-table td:last-child { border-bottom: 0; }
+            .admin-table td::before { content: attr(data-label); color: #617269; font-size: .78rem; font-weight: 700; }
+            .admin-definition-list { grid-template-columns: 1fr; }
+        }
+    </style>
+    <main class="market-admin">
+        <header class="admin-heading">
+            <div>
+                <h1>{% block admin_heading %}Marketplace administration{% endblock %}</h1>
+                <p>{% block admin_description %}Operations overview for Sbji@Home.{% endblock %}</p>
+            </div>
+            <a class="admin-secondary-link" href="{% url 'product_list' %}">Back to marketplace</a>
+        </header>
+        <nav class="admin-nav" aria-label="Marketplace administration">
+            <a href="{% url 'market_admin_dashboard' %}"{% if request.resolver_match.url_name == 'market_admin_dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+            {% if perms.market.view_customer and perms.auth.view_user %}<a href="{% url 'market_admin_customer_list' %}"{% if 'customer' in request.resolver_match.url_name %} aria-current="page"{% endif %}>Customers</a>{% endif %}
+            {% if perms.market.view_vendor and perms.auth.view_user %}<a href="{% url 'market_admin_vendor_list' %}"{% if 'vendor' in request.resolver_match.url_name %} aria-current="page"{% endif %}>Vendors</a>{% endif %}
+            {% if perms.market.view_product %}<a href="{% url 'market_admin_product_list' %}"{% if request.resolver_match.url_name == 'market_admin_product_list' %} aria-current="page"{% endif %}>Products</a>{% endif %}
+            {% if perms.market.view_category %}<a href="{% url 'market_admin_category_list' %}"{% if request.resolver_match.url_name == 'market_admin_category_list' %} aria-current="page"{% endif %}>Categories</a>{% endif %}
+            {% if perms.market.view_order and perms.market.view_orderitem and perms.market.view_customer and perms.auth.view_user %}<a href="{% url 'market_admin_order_list' %}"{% if 'order' in request.resolver_match.url_name %} aria-current="page"{% endif %}>Orders</a>{% endif %}
+            {% if perms.market.view_vendororder and perms.market.change_vendororder %}<a href="{% url 'admin:market_vendororder_changelist' %}">Fulfillments</a>{% endif %}
+            {% if perms.auth.view_user %}<a href="{% url 'admin:auth_user_changelist' %}">Accounts</a>{% endif %}
+            <a href="{% url 'notification_center' %}">Notifications{% if header_unread_notification_count %} ({{ header_unread_notification_count }} unread){% endif %}</a>
+            <a href="{% url 'logout' %}">Log out</a>
+        </nav>
+        {% block admin_content %}{% endblock %}
+    </main>
+{% endblock %}

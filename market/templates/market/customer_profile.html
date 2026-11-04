@@ -1,0 +1,144 @@
+{% extends "market/base.html" %}
+
+{% block title %}My Account | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .account-page { max-width: 1080px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .account-heading { margin-bottom: 1.1rem; }
+        .account-heading h1 { margin: 0 0 .3rem; font-size: clamp(1.6rem, 4vw, 2rem); }
+        .account-heading p { margin: 0; color: #617269; }
+        .account-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+        .account-card { min-width: 0; padding: 1rem; border: 1px solid #e2eae4; border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .account-card h2 { margin: 0 0 .75rem; font-size: 1.12rem; }
+        .account-summary-name { margin: 0; font-size: 1.15rem; font-weight: 800; overflow-wrap: anywhere; }
+        .account-summary-meta { margin: .25rem 0; color: #617269; overflow-wrap: anywhere; }
+        .account-count { display: inline-block; margin-top: .5rem; padding: .35rem .55rem; border-radius: 999px; background: #e8f4e9; color: #176b45; font-size: .82rem; font-weight: 750; }
+        .account-links { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+        .account-links a, .account-address-action {
+            display: flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            padding: .65rem .75rem;
+            border: 1px solid #e2eae4;
+            border-radius: 11px;
+            color: #183329;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .account-links a:hover, .account-address-action:hover { border-color: #b9d5c4; background: #f6faf6; }
+        .account-card a:focus-visible, .account-page button:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .account-address-list { display: grid; gap: .7rem; margin: 0; padding: 0; list-style: none; }
+        .account-address { padding: .8rem; border: 1px solid #e2eae4; border-radius: 12px; background: #fbfcfa; overflow-wrap: anywhere; }
+        .account-address h3 { margin: 0 0 .25rem; font-size: .98rem; }
+        .account-address p { margin: .2rem 0; color: #617269; font-size: .9rem; }
+        .account-address-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .55rem; }
+        .account-address-action { display: inline-flex; min-height: 40px; padding: .5rem .65rem; background: #fff; font-size: .84rem; }
+        .account-address-form { margin: 0; }
+        .account-profile-form p { margin: .75rem 0; }
+        .account-profile-form label { display: block; margin-bottom: .3rem; font-size: .88rem; font-weight: 700; }
+        .account-profile-form input, .account-profile-form textarea {
+            width: 100%;
+            min-height: 44px;
+            padding: .65rem .75rem;
+            border: 1px solid #cbd5ce;
+            border-radius: 10px;
+            color: #183329;
+            font: inherit;
+        }
+        .account-profile-form button, .account-primary-link {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            padding: .65rem .9rem;
+            border: 0;
+            border-radius: 10px;
+            background: #176b45;
+            color: #fff;
+            font: inherit;
+            font-weight: 750;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .account-empty { margin: 0; color: #617269; }
+        @media (min-width: 760px) {
+            .account-page { padding: 2rem 1.25rem 3.5rem; }
+            .account-layout { grid-template-columns: minmax(230px, .8fr) minmax(0, 1.5fr); align-items: start; }
+            .account-sidebar { display: grid; gap: 1rem; }
+            .account-card { padding: 1.2rem; }
+        }
+    </style>
+    <main class="account-page">
+        <header class="account-heading">
+            <h1>My account</h1>
+            <p>Manage your profile, delivery addresses, and orders.</p>
+        </header>
+        <div class="account-layout">
+            <aside class="account-sidebar" aria-label="Account overview and navigation">
+                <section class="account-card" aria-labelledby="account-overview-heading">
+                    <h2 id="account-overview-heading">Account overview</h2>
+                    <p class="account-summary-name">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="account-summary-meta">@{{ user.username }}</p>
+                    {% if user.email %}<p class="account-summary-meta">{{ user.email }}</p>{% endif %}
+                    <p class="account-summary-meta">{{ customer.phone|default:"Phone number not added" }}</p>
+                    <span class="account-count">{{ order_count }} order{{ order_count|pluralize }}</span>
+                </section>
+                <nav class="account-card" aria-label="Account navigation">
+                    <h2>Quick links</h2>
+                    <ul class="account-links">
+                        <li><a href="{% url 'customer_profile' %}" aria-current="page">My Profile <span aria-hidden="true">›</span></a></li>
+                        <li><a href="{% url 'order_history' %}">My Orders <span aria-hidden="true">›</span></a></li>
+                        <li><a href="{% url 'wishlist' %}">Wishlist <span aria-hidden="true">›</span></a></li>
+                        <li><a href="{% url 'cart' %}">My Cart <span aria-hidden="true">›</span></a></li>
+                        <li><a href="{% url 'product_list' %}">Continue Shopping <span aria-hidden="true">›</span></a></li>
+                        <li><a href="{% url 'logout' %}">Log out <span aria-hidden="true">›</span></a></li>
+                    </ul>
+                </nav>
+            </aside>
+            <div class="account-main">
+                <section class="account-card" aria-labelledby="profile-heading">
+                    <h2 id="profile-heading">Profile details</h2>
+                    <form class="account-profile-form" method="post">
+                        {% csrf_token %}
+                        {{ user_form.as_p }}
+                        {{ customer_form.as_p }}
+                        <button type="submit">Save profile</button>
+                    </form>
+                </section>
+                <section class="account-card" aria-labelledby="addresses-heading">
+                    <h2 id="addresses-heading">Saved delivery addresses</h2>
+                    {% if addresses %}
+                        <ul class="account-address-list">
+                            {% for address in addresses %}
+                                <li class="account-address">
+                                    <h3>{{ address.label }}{% if address.is_default %} <span class="account-count">Default</span>{% endif %}</h3>
+                                    <p>{{ address.recipient_name }} · {{ address.phone }}</p>
+                                    <p>
+                                        {{ address.address_line_1 }}{% if address.address_line_2 %}, {{ address.address_line_2 }}{% endif %},
+                                        {{ address.city }}, {{ address.state }} {{ address.postal_code }}
+                                    </p>
+                                    <div class="account-address-actions">
+                                        <a class="account-address-action" href="{% url 'edit_delivery_address' address.id %}">Edit address</a>
+                                        <a class="account-address-action" href="{% url 'delete_delivery_address' address.id %}">Delete address</a>
+                                        {% if not address.is_default %}
+                                            <form class="account-address-form" method="post" action="{% url 'set_default_delivery_address' address.id %}">
+                                                {% csrf_token %}
+                                                <button class="account-address-action" type="submit">Set as default</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="account-empty">No delivery addresses saved yet. Add one for a quicker checkout.</p>
+                    {% endif %}
+                    <p><a class="account-primary-link" href="{% url 'add_delivery_address' %}">Add delivery address</a></p>
+                </section>
+            </div>
+        </div>
+    </main>
+{% endblock %}

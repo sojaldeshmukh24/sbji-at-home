@@ -1,0 +1,145 @@
+{% extends "market/base.html" %}
+
+{% block title %}Order #{{ order.id }} | Vendor Orders{% endblock %}
+
+{% block content %}
+    <style>
+        .vendor-page { max-width: 1000px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .vendor-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .7rem; margin-bottom: 1rem; }
+        .vendor-heading h1 { margin: 0 0 .25rem; font-size: clamp(1.55rem, 4vw, 2rem); }
+        .vendor-heading p { margin: 0; color: #617269; }
+        .vendor-navigation { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; padding: .45rem; border: 1px solid #e2eae4; border-radius: 13px; background: #fff; }
+        .vendor-navigation a { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .7rem; border-radius: 9px; color: #183329; font-size: .87rem; font-weight: 700; text-decoration: none; }
+        .vendor-navigation a:hover, .vendor-navigation a[aria-current="page"] { background: #e8f4e9; color: #155d3c; }
+        .vendor-navigation a:focus-visible, .vendor-page a:focus-visible, .vendor-page button:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .vendor-detail-layout { display: grid; gap: 1rem; }
+        .vendor-card { min-width: 0; padding: 1rem; border: 1px solid #e2eae4; border-radius: 15px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .vendor-card h2 { margin: 0 0 .7rem; font-size: 1.1rem; }
+        .vendor-order-status, .vendor-payment-status { display: inline-flex; min-height: 32px; align-items: center; padding: .35rem .6rem; border-radius: 999px; background: #e8f4e9; color: #155d3c; font-weight: 750; }
+        .vendor-payment-status { background: #f2f4f2; color: #435149; }
+        .vendor-item-list { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+        .vendor-item { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: .75rem; border: 1px solid #e2eae4; border-radius: 11px; }
+        .vendor-item-name { min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
+        .vendor-item-meta { margin: .2rem 0 0; color: #617269; font-size: .86rem; overflow-wrap: anywhere; }
+        .vendor-item-subtotal { white-space: nowrap; font-weight: 800; }
+        .vendor-status-history { display: grid; gap: .5rem; margin: 0; padding-left: 1.2rem; }
+        .vendor-status-history time { display: block; color: #617269; font-size: .8rem; }
+        .vendor-total { display: flex; justify-content: space-between; gap: .8rem; margin-top: .8rem; padding-top: .75rem; border-top: 1px solid #e2eae4; font-weight: 850; }
+        .vendor-customer-copy { margin: 0; color: #435149; line-height: 1.5; overflow-wrap: anywhere; }
+        .vendor-customer-copy + .vendor-customer-copy { margin-top: .55rem; }
+        .vendor-actions { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .85rem; }
+        .vendor-actions form { margin: 0; }
+        .vendor-primary-action, .vendor-secondary-action {
+            display: inline-flex;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            padding: .65rem .85rem;
+            border: 1px solid #176b45;
+            border-radius: 10px;
+            background: #176b45;
+            color: #fff;
+            font: inherit;
+            font-weight: 750;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .vendor-secondary-action { border-color: #e2eae4; background: #fff; color: #183329; }
+        @media (min-width: 760px) { .vendor-page { padding: 2rem 1.25rem 3.5rem; } .vendor-detail-layout { grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr); align-items: start; } .vendor-card { padding: 1.2rem; } }
+    </style>
+    <main class="vendor-page">
+        <header class="vendor-heading">
+            <div>
+                <h1>Order #{{ order.id }}</h1>
+                <p>This page shows only the items supplied by {{ vendor.shop_name|default:vendor.name }}.</p>
+            </div>
+            <span class="vendor-order-status">● {{ vendor_order.get_status_display }}</span>
+        </header>
+        {% include "market/vendor_navigation.html" %}
+        <div class="vendor-detail-layout">
+            <div>
+                <section class="vendor-card" aria-labelledby="your-items-heading">
+                    <h2 id="your-items-heading">Your items in this order</h2>
+                    <ul class="vendor-item-list">
+                        {% for item in items %}
+                            <li class="vendor-item">
+                                <div>
+                                    <span class="vendor-item-name">{% if item.product_name_snapshot %}{{ item.product_name_snapshot }}{% elif item.product %}{{ item.product.name }}{% else %}Product information unavailable{% endif %}</span>
+                                    <p class="vendor-item-meta">
+                                        Quantity: {{ item.quantity }}{% if item.product_units_snapshot %} {{ item.product_units_snapshot }}{% elif item.product %} {{ item.product.units }}{% endif %}
+                                        {% if item.product %}· {{ item.product.category.name }}{% endif %}
+                                        · {{ item.unit_price|floatformat:2 }} each
+                                    </p>
+                                </div>
+                                <span class="vendor-item-subtotal">₹{{ item.line_total|floatformat:2 }}</span>
+                            </li>
+                        {% empty %}
+                            <li>Your product details are not available for this order.</li>
+                        {% endfor %}
+                    </ul>
+                    <p class="vendor-total"><span>Your item subtotal</span><span>₹{{ vendor_subtotal|floatformat:2 }}</span></p>
+                </section>
+                <section class="vendor-card" aria-labelledby="order-state-heading" style="margin-top:1rem">
+                    <h2 id="order-state-heading">Order and payment status</h2>
+                    <p class="vendor-customer-copy"><strong>Order date:</strong> {{ order.order_date|date:"j M Y, g:i A" }}</p>
+                    <p class="vendor-customer-copy"><strong>Your fulfillment status:</strong> {{ vendor_order.get_status_display }}</p>
+                    <p class="vendor-customer-copy"><strong>Payment:</strong> {{ order.get_payment_method_display|default:"Not recorded" }} · {{ order.get_payment_status_display }}</p>
+                    {% if order.delivery_slot_date and order.delivery_slot_start_time and order.delivery_slot_end_time %}
+                        <p class="vendor-customer-copy"><strong>Delivery slot:</strong> {{ order.delivery_slot_date|date:"l, F j" }} — {{ order.delivery_slot_name }} ({{ order.delivery_slot_start_time|time:'g:i A' }}–{{ order.delivery_slot_end_time|time:'g:i A' }})</p>
+                    {% endif %}
+                    {% if vendor_order.status == 'pending' or vendor_order.status == 'confirmed' or vendor_order.status == 'preparing' %}
+                        <div class="vendor-actions">
+                            <form method="post" action="{% if vendor_order.status == 'pending' %}{% url 'accept_vendor_order' vendor_order.id %}{% else %}{% url 'advance_vendor_order' vendor_order.id %}{% endif %}">
+                                {% csrf_token %}
+                                <button class="vendor-primary-action" type="submit">
+                                    {% if vendor_order.status == 'pending' %}Confirm your items{% elif vendor_order.status == 'confirmed' %}Start preparing{% else %}Mark ready for delivery{% endif %}
+                                </button>
+                            </form>
+                            {% if vendor_order.status == 'pending' %}
+                                <a class="vendor-secondary-action" href="{% url 'reject_vendor_order' vendor_order.id %}">Reject your items</a>
+                            {% endif %}
+                        </div>
+                    {% elif vendor_order.status == 'ready_for_delivery' %}
+                        <p class="vendor-customer-copy">Waiting for the delivery team to take over.</p>
+                    {% elif vendor_order.status == 'out_for_delivery' %}
+                        <p class="vendor-customer-copy">Your items are out for delivery.</p>
+                    {% elif vendor_order.status == 'delivered' %}
+                        <p class="vendor-customer-copy">Your items were delivered{% if vendor_order.delivered_at %} at {{ vendor_order.delivered_at|date:"j M Y, g:i A" }}{% endif %}.</p>
+                    {% elif vendor_order.status == 'rejected' %}
+                        <p class="vendor-customer-copy">This vendor fulfillment was rejected and returned to stock.</p>
+                    {% endif %}
+                </section>
+                {% if status_history %}
+                    <section class="vendor-card" aria-labelledby="vendor-history-heading" style="margin-top:1rem">
+                        <h2 id="vendor-history-heading">Your fulfillment history</h2>
+                        <ol class="vendor-status-history">
+                            {% for change in status_history %}
+                                <li>
+                                    <time datetime="{{ change.created_at|date:'c' }}">{{ change.created_at|date:"j M Y, g:i A" }}</time>
+                                    {% if change.previous_status %}{{ change.previous_status_label }} → {% else %}Fulfillment created · {% endif %}{{ change.new_status_label }}
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    </section>
+                {% endif %}
+            </div>
+            <aside class="vendor-card" aria-labelledby="fulfillment-address-heading">
+                <h2 id="fulfillment-address-heading">Delivery information</h2>
+                {% if order.delivery_address_line_1 %}
+                    <p class="vendor-customer-copy"><strong>{{ order.delivery_name|default:order.customer.user.username }}</strong>{% if order.delivery_phone %}<br>{{ order.delivery_phone }}{% endif %}</p>
+                    <p class="vendor-customer-copy">
+                        {{ order.delivery_address_line_1 }}
+                        {% if order.delivery_address_line_2 %}, {{ order.delivery_address_line_2 }}{% endif %}
+                        {% if order.delivery_city or order.delivery_state or order.delivery_postal_code %}<br>{{ order.delivery_city }}{% if order.delivery_city and order.delivery_state %}, {% endif %}{{ order.delivery_state }} {{ order.delivery_postal_code }}{% endif %}
+                    </p>
+                {% else %}
+                    <p class="vendor-customer-copy"><strong>Name:</strong> {{ order.customer.user.username }}</p>
+                    <p class="vendor-customer-copy"><strong>Delivery address:</strong> {{ order.customer.address }}</p>
+                    <p class="vendor-customer-copy"><strong>Phone:</strong> {{ order.customer.phone }}</p>
+                {% endif %}
+                <p class="vendor-customer-copy">Use these details only to fulfill this order.</p>
+            </aside>
+        </div>
+        <p class="vendor-actions"><a class="vendor-secondary-action" href="{% url 'vendor_order_list' %}">Back to your orders</a></p>
+    </main>
+{% endblock %}

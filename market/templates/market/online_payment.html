@@ -1,0 +1,166 @@
+{% extends "market/base.html" %}
+
+{% block title %}Payment for Order #{{ order.id }} | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .online-payment-page { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 3rem; color: #17211b; }
+        .online-payment-card { padding: 1.2rem; border: 1px solid #e6ebe7; border-radius: 18px; background: #fff; box-shadow: 0 4px 18px rgb(20 45 30 / 6%); }
+        .online-payment-card h1 { margin: 0 0 .35rem; font-size: 1.55rem; }
+        .online-payment-muted { color: #68736d; }
+        .online-payment-total { margin: 1.15rem 0; padding: 1rem; border-radius: 13px; background: #f1f7f2; }
+        .online-payment-total strong { display: block; margin-top: .2rem; color: #105236; font-size: 1.5rem; }
+        .online-payment-state { display: inline-block; padding: .35rem .65rem; border-radius: 999px; background: #fff4d6; color: #6b4b00; font-size: .85rem; font-weight: 700; }
+        .online-payment-action { width: 100%; min-height: 48px; margin-top: .8rem; padding: .7rem 1rem; border: 0; border-radius: 11px; background: #176b45; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+        .online-payment-action:disabled { opacity: .65; cursor: wait; }
+        .online-payment-cancel { display: block; margin: .8rem auto 0; padding: .4rem; border: 0; background: transparent; color: #68736d; font: inherit; text-decoration: underline; cursor: pointer; }
+        .online-payment-note { margin: 1rem 0 0; color: #68736d; font-size: .88rem; }
+        .online-payment-alert { padding: .9rem; border-radius: 12px; background: #fff4d6; color: #6b4b00; }
+    </style>
+    <main class="online-payment-page">
+        <section class="online-payment-card" aria-labelledby="online-payment-title">
+            <h1 id="online-payment-title">Online payment</h1>
+            <p class="online-payment-muted">Order #{{ order.id }} · Razorpay test mode</p>
+            <div class="online-payment-total">
+                Amount payable
+                <strong>₹{{ amount|floatformat:2 }}</strong>
+            </div>
+            <p><span class="online-payment-state">Payment {{ order.get_payment_status_display|lower }}</span></p>
+
+            {% if order.payment_status == 'paid' %}
+                <p class="online-payment-alert">Payment confirmed. Your order is being prepared.</p>
+                <a class="online-payment-action" href="{% url 'order_confirmation' order.id %}">View order</a>
+            {% elif order.payment_status == 'cancelled' or order.payment_status == 'expired' %}
+                <p class="online-payment-alert">This payment session is {{ order.get_payment_status_display|lower }}. Reserved stock has been released.</p>
+                <a href="{% url 'product_list' %}">Continue shopping</a>
+            {% elif not payment_configured %}
+                <p class="online-payment-alert">Razorpay test credentials are not configured. No payment can be made.</p>
+                <a href="{% url 'checkout' %}">Return to checkout</a>
+            {% elif order.payment_status == 'failed' %}
+                <p class="online-payment-alert">The failed attempt released its stock reservation. Retry to validate availability and reserve the same order again.</p>
+                <form id="retry-payment-form" method="post" action="{% url 'start_online_payment' order.id %}">
+                    {% csrf_token %}
+                    <button id="retry-payment-button" class="online-payment-action" type="submit">Retry online payment</button>
+                </form>
+                <form method="post" action="{% url 'cancel_online_payment' order.id %}">
+                    {% csrf_token %}
+                    <button class="online-payment-cancel" type="submit">Cancel order</button>
+                </form>
+            {% elif order.razorpay_order_id %}
+                <button id="pay-online-button" class="online-payment-action" type="button">
+                    Pay ₹{{ amount|floatformat:2 }}
+                </button>
+                <form id="verify-payment-form" method="post" action="{% url 'verify_online_payment' order.id %}" hidden>
+                    {% csrf_token %}
+                    <input name="razorpay_order_id">
+                    <input name="razorpay_payment_id">
+                    <input name="razorpay_signature">
+                </form>
+                <form id="failed-payment-form" method="post" action="{% url 'fail_online_payment' order.id %}" hidden>
+                    {% csrf_token %}
+                    <input name="razorpay_order_id" value="{{ order.razorpay_order_id }}">
+                    <input name="razorpay_payment_id">
+                </form>
+                <form id="cancel-payment-form" method="post" action="{% url 'cancel_online_payment' order.id %}">
+                    {% csrf_token %}
+                    <button id="cancel-online-button" class="online-payment-cancel" type="submit">Cancel online payment</button>
+                </form>
+                <p id="payment-dismissed-message" class="online-payment-note" role="status" hidden>
+                    Payment window closed. Your order is still pending; you can retry.
+                </p>
+                <p class="online-payment-note">
+                    Your stock is reserved temporarily{% if order.payment_expires_at %} until {{ order.payment_expires_at|date:'g:i A' }}{% endif %}.
+                    This is a test transaction; no real money is charged.
+                </p>
+            {% else %}
+                <p class="online-payment-alert">Your stock is reserved while the test payment is prepared.</p>
+                <form id="prepare-payment-form" method="post" action="{% url 'start_online_payment' order.id %}">
+                    {% csrf_token %}
+                    <button id="prepare-payment-button" class="online-payment-action" type="submit">Prepare secure payment</button>
+                </form>
+                <form method="post" action="{% url 'cancel_online_payment' order.id %}">
+                    {% csrf_token %}
+                    <button class="online-payment-cancel" type="submit">Cancel order and release stock</button>
+                </form>
+            {% endif %}
+        </section>
+    </main>
+    <script>
+        (() => {
+            const prepareForm = document.getElementById('prepare-payment-form');
+            const retryForm = document.getElementById('retry-payment-form');
+            for (const [form, buttonId, label] of [
+                [prepareForm, 'prepare-payment-button', 'Preparing secure test payment…'],
+                [retryForm, 'retry-payment-button', 'Revalidating stock and preparing retry…'],
+            ]) {
+                if (!form) continue;
+                form.addEventListener('submit', () => {
+                    const button = document.getElementById(buttonId);
+                    button.disabled = true;
+                    button.textContent = label;
+                });
+            }
+        })();
+    </script>
+    {% if order.razorpay_order_id and payment_configured and order.payment_status == 'pending' %}
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+        <script>
+            (() => {
+                const button = document.getElementById('pay-online-button');
+                const verifyForm = document.getElementById('verify-payment-form');
+                const failureForm = document.getElementById('failed-payment-form');
+                const cancelButton = document.getElementById('cancel-online-button');
+                const dismissedMessage = document.getElementById('payment-dismissed-message');
+                const csrf = verifyForm.querySelector('[name="csrfmiddlewaretoken"]').value;
+                button.addEventListener('click', () => {
+                    button.disabled = true;
+                    button.textContent = 'Opening secure test checkout…';
+                    const checkout = new Razorpay({
+                        key: '{{ key_id|escapejs }}',
+                        amount: {{ amount_paise }},
+                        currency: 'INR',
+                        name: 'SBJI@Home',
+                        description: 'Order #{{ order.id }}',
+                        order_id: '{{ order.razorpay_order_id|escapejs }}',
+                        handler: (result) => {
+                            verifyForm.elements.razorpay_order_id.value = result.razorpay_order_id;
+                            verifyForm.elements.razorpay_payment_id.value = result.razorpay_payment_id;
+                            verifyForm.elements.razorpay_signature.value = result.razorpay_signature;
+                            verifyForm.submit();
+                        },
+                        modal: {
+                            ondismiss: () => {
+                                button.disabled = false;
+                                button.textContent = 'Retry online payment';
+                                dismissedMessage.hidden = false;
+                            },
+                        },
+                        theme: { color: '#176b45' },
+                    });
+                    checkout.on('payment.failed', (event) => {
+                        const paymentId = event.error && event.error.metadata
+                            ? event.error.metadata.payment_id
+                            : '';
+                        if (paymentId) {
+                            failureForm.elements.razorpay_payment_id.value = paymentId;
+                            failureForm.submit();
+                        } else {
+                            button.disabled = false;
+                            button.textContent = 'Retry online payment';
+                        }
+                    });
+                    cancelButton.addEventListener('click', () => {
+                        cancelButton.disabled = true;
+                        cancelButton.textContent = 'Checking payment status…';
+                    }, { once: true });
+                    checkout.open();
+                    button.textContent = 'Secure test checkout is open';
+                });
+                verifyForm.addEventListener('submit', () => {
+                    button.disabled = true;
+                    button.textContent = 'Verifying payment securely…';
+                });
+            })();
+        </script>
+    {% endif %}
+{% endblock %}

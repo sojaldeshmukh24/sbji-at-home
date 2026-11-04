@@ -1,0 +1,152 @@
+{% extends "market/base.html" %}
+{% load static %}
+
+{% block title %}Fresh picks, thoughtfully delivered | SBJI@Home{% endblock %}
+{% block body_class %}home-layout{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" href="{% static 'market/home.css' %}">
+    <main>
+        <section class="home-hero" aria-labelledby="home-hero-title">
+            <div class="home-wrap home-hero-inner">
+                <div class="home-hero-content">
+                    <p class="home-hero-tag"><span aria-hidden="true">🌱</span> 100% Fresh &amp; Local</p>
+                    <h1 id="home-hero-title">Fresh Vegetables,<br>Delivered to <em>Your Door.</em></h1>
+                    <p class="home-hero-copy">Shop fresh vegetables and fruits from trusted local sellers near you. Find everyday essentials and order for home delivery.</p>
+                    <div class="home-hero-actions">
+                        <a class="home-button home-button-primary" href="{% url 'product_list' %}"><span aria-hidden="true">🛒</span> Shop now</a>
+                        <a class="home-button home-button-outline" href="#home-categories">Explore categories <span aria-hidden="true">→</span></a>
+                    </div>
+                    <ul class="home-hero-trust" aria-label="Shopping benefits">
+                        <li>Local sellers</li>
+                        <li>Easy checkout</li>
+                        <li>Delivery options</li>
+                    </ul>
+                </div>
+                <div class="home-hero-visual">
+                    <div class="home-hero-circle" aria-hidden="true"></div>
+                    <img class="home-hero-image" src="{% static 'market/home-hero.avif' %}" alt="A fresh bowl of vegetables and salad">
+                    {% if featured_products %}
+                        <div class="home-floating-card home-floating-pick">
+                            <span class="home-floating-icon" aria-hidden="true">🥕</span>
+                            <span><small>Today's pick</small><strong>{{ featured_products.0.name }} · ₹{{ featured_products.0.price }}/{{ featured_products.0.units }}</strong></span>
+                        </div>
+                    {% endif %}
+                    <div class="home-floating-card home-floating-delivery">
+                        <span class="home-floating-icon" aria-hidden="true">🛍️</span>
+                        <span><small>Shop local</small><strong>From neighborhood sellers</strong></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-benefits" aria-label="Shopping benefits">
+            <div class="home-wrap home-benefits-grid">
+                <div class="home-benefit">
+                    <span class="home-benefit-icon home-benefit-green" aria-hidden="true">🌱</span>
+                    <span><strong>Farm fresh</strong><small>Discover local produce</small></span>
+                </div>
+                <div class="home-benefit">
+                    <span class="home-benefit-icon home-benefit-blue" aria-hidden="true">🚚</span>
+                    <span><strong>Delivery options</strong><small>Choose a convenient slot</small></span>
+                </div>
+                <div class="home-benefit">
+                    <span class="home-benefit-icon home-benefit-yellow" aria-hidden="true">🛡️</span>
+                    <span><strong>Trusted sellers</strong><small>Shop neighborhood vendors</small></span>
+                </div>
+                <div class="home-benefit">
+                    <span class="home-benefit-icon home-benefit-mint" aria-hidden="true">✓</span>
+                    <span><strong>Secure checkout</strong><small>Review your order before paying</small></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="home-wrap home-content">
+            <section class="home-promos" aria-label="Explore SBJI at Home">
+                <a class="home-promo home-promo-green" href="{% url 'product_list' %}">
+                    <span class="home-promo-icon" aria-hidden="true">🥬</span>
+                    <span><small>Fresh picks</small><strong>Bring home something fresh.</strong><span class="home-promo-link">Shop vegetables →</span></span>
+                </a>
+                <a class="home-promo home-promo-orange" href="{% url 'vendor_search' %}">
+                    <span class="home-promo-icon" aria-hidden="true">🌾</span>
+                    <span><small>Local sellers</small><strong>Get to know your neighborhood shops.</strong><span class="home-promo-link">Meet sellers →</span></span>
+                </a>
+                <a class="home-promo home-promo-blue" href="{% url 'vendor_register' %}">
+                    <span class="home-promo-icon" aria-hidden="true">🧺</span>
+                    <span><small>For local vendors</small><strong>Bring your shop to SBJI@Home.</strong><span class="home-promo-link">Join as a seller →</span></span>
+                </a>
+            </section>
+
+            <section class="home-section" id="home-categories" aria-labelledby="home-categories-title">
+                <div class="home-section-heading">
+                    <div>
+                        <h2 id="home-categories-title">Shop by category</h2>
+                        <p>Browse fresh listings by type.</p>
+                    </div>
+                    <a class="home-section-link" href="{% url 'product_list' %}">View all products <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="home-category-grid">
+                    {% for category in categories %}
+                        <a class="home-category-card" href="{% url 'product_list' %}?category={{ category.id }}">
+                            <span class="home-category-icon" aria-hidden="true">{% cycle '🥬' '🍅' '🥕' '🌿' '🍎' '🧅' %}</span>
+                            <span class="home-category-name">{{ category.name }}</span>
+                            <span class="home-category-count">{{ category.listing_count }} listing{{ category.listing_count|pluralize }}</span>
+                        </a>
+                    {% empty %}
+                        <p class="home-empty">New categories are on their way.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="home-section" aria-labelledby="home-featured-title">
+                <div class="home-section-heading">
+                    <div>
+                        <h2 id="home-featured-title">Popular near you</h2>
+                        <p>Fresh listings from local shops.</p>
+                    </div>
+                    <a class="home-section-link" href="{% url 'product_list' %}">Browse the market <span aria-hidden="true">→</span></a>
+                </div>
+                <div class="home-product-grid">
+                    {% for product in featured_products %}
+                        {% include "market/partials/product_card.html" with product=product wishlist_product_ids=wishlist_product_ids wishlist_next="/" card_key="featured" %}
+                    {% empty %}
+                        <p class="home-empty">Our local shops are getting their fresh picks ready.</p>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="home-section" aria-labelledby="home-recent-title">
+                <div class="home-section-heading">
+                    <div>
+                        <h2 id="home-recent-title">Recently viewed</h2>
+                        <p>Pick up where you left off.</p>
+                    </div>
+                    <a class="home-section-link" href="{% url 'product_list' %}">See all products <span aria-hidden="true">→</span></a>
+                </div>
+                {% if recently_viewed_products %}
+                    <ul class="home-recent-grid">
+                        {% for product in recently_viewed_products %}
+                            <li>{% include "market/partials/product_card.html" with product=product wishlist_product_ids=wishlist_product_ids wishlist_next="/" card_key="home-recent" %}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="home-empty">Products you view will appear here.</p>
+                {% endif %}
+            </section>
+        </div>
+
+        <section class="home-trust-banner" aria-labelledby="home-trust-title">
+            <div class="home-wrap home-trust-inner">
+                <div>
+                    <h2 id="home-trust-title">Fresh groceries,<br>from your local market.</h2>
+                    <p>Fresh picks from your neighborhood. Discover local produce and shop for delivery to your home.</p>
+                </div>
+                <div class="home-trust-stats" aria-label="Marketplace overview">
+                    <div><strong>{{ product_count }}</strong><span>Available listings</span></div>
+                    <div><strong>{{ seller_count }}</strong><span>Local sellers</span></div>
+                    <a href="{% url 'product_list' %}">Start shopping <span aria-hidden="true">→</span></a>
+                </div>
+            </div>
+        </section>
+    </main>
+{% endblock %}

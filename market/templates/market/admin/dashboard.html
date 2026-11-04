@@ -1,0 +1,47 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}Dashboard{% endblock %}
+{% block admin_heading %}Marketplace overview{% endblock %}
+{% block admin_description %}Live account, inventory, order, and marketplace value metrics.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-stats" aria-label="Marketplace totals">
+        <article class="admin-stat"><span class="admin-stat-label">Customers</span><span class="admin-stat-value">{{ customer_count }}</span><span class="admin-stat-label">{{ active_customer_count }} active accounts</span></article>
+        <article class="admin-stat"><span class="admin-stat-label">Vendors</span><span class="admin-stat-value">{{ vendor_count }}</span><span class="admin-stat-label">{{ active_vendor_count }} active · {{ vendors_with_products }} with listings</span></article>
+        <article class="admin-stat"><span class="admin-stat-label">Products</span><span class="admin-stat-value">{{ product_count }}</span><span class="admin-stat-label">{{ available_product_count }} available</span></article>
+        <article class="admin-stat"><span class="admin-stat-label">Low stock (≤ 5)</span><span class="admin-stat-value">{{ low_stock_count }}</span><span class="admin-stat-label">{{ out_of_stock_count }} out of stock</span></article>
+        <article class="admin-stat"><span class="admin-stat-label">Orders</span><span class="admin-stat-value">{{ order_count }}</span><span class="admin-stat-label">All marketplace orders</span></article>
+        <article class="admin-stat"><span class="admin-stat-label">Placed order value</span><span class="admin-stat-value">₹{{ marketplace_order_value|floatformat:2 }}</span><span class="admin-stat-label">Historical item prices; not settlements</span></article>
+    </section>
+    <div class="admin-summary-grid" style="margin-top:1rem">
+        <section class="admin-panel" aria-labelledby="order-status-heading">
+            <h2 id="order-status-heading">Order status</h2>
+            {% if order_status_counts %}<div class="admin-status-grid">{% for item in order_status_counts %}<div class="admin-status-item"><span>{{ item.status|default:"Unspecified"|capfirst }}</span><strong>{{ item.count }}</strong></div>{% endfor %}</div>{% else %}<div class="admin-empty"><strong>No orders yet</strong>New marketplace orders will appear here.</div>{% endif %}
+        </section>
+        <section class="admin-panel" aria-labelledby="payment-status-heading">
+            <h2 id="payment-status-heading">Payment status</h2>
+            {% if payment_status_counts %}<div class="admin-status-grid">{% for item in payment_status_counts %}<div class="admin-status-item"><span>{{ item.payment_status|default:"Unspecified"|capfirst }}</span><strong>{{ item.count }}</strong></div>{% endfor %}</div>{% else %}<div class="admin-empty"><strong>No payment activity yet</strong>Payment states will appear as orders are placed.</div>{% endif %}
+        </section>
+    </div>
+    <section class="admin-panel" aria-labelledby="recent-orders-heading">
+        <div class="admin-heading">
+            <div><h2 id="recent-orders-heading">Recent orders</h2><p>Latest marketplace activity, newest first.</p></div>
+            <a class="admin-secondary-link" href="{% url 'market_admin_order_list' %}">All orders</a>
+        </div>
+        {% if recent_orders %}
+            <div class="admin-table-wrap"><table class="admin-table">
+                <thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">Items</th><th scope="col">Total</th><th scope="col">Payment</th><th scope="col">Status</th><th scope="col">Details</th></tr></thead>
+                <tbody>{% for order in recent_orders %}<tr>
+                    <td data-label="Order">#{{ order.id }}</td>
+                    <td data-label="Customer">{{ order.customer.user.get_full_name|default:order.customer.user.username }}</td>
+                    <td data-label="Date">{{ order.order_date|date:"j M Y, g:i A" }}</td>
+                    <td data-label="Items">{{ order.admin_item_count }}</td>
+                    <td data-label="Total">₹{{ order.admin_order_total|floatformat:2 }}</td>
+                    <td data-label="Payment">{{ order.get_payment_status_display }}</td>
+                    <td data-label="Status">{{ order.get_status_display|default:"Unspecified" }}</td>
+                    <td data-label="Details"><a href="{% url 'market_admin_order_detail' order.id %}">View order</a></td>
+                </tr>{% endfor %}</tbody>
+            </table></div>
+        {% else %}<div class="admin-empty"><strong>No orders found</strong>Order activity will appear here when customers place an order.</div>{% endif %}
+    </section>
+{% endblock %}

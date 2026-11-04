@@ -1,0 +1,41 @@
+{% extends "market/base.html" %}
+
+{% block title %}Vendor Login | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .vendor-auth-page { max-width: 560px; margin: 0 auto; padding: 2rem 1rem 3rem; color: #183329; }
+        .vendor-auth-heading { margin-bottom: 1rem; }
+        .vendor-auth-heading h1 { margin: 0 0 .35rem; font-size: 1.8rem; }
+        .vendor-auth-heading p, .vendor-auth-links { color: #617269; }
+        .vendor-auth-card { padding: 1.1rem; border: 1px solid #e2eae4; border-radius: 12px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .vendor-auth-card p { margin: .85rem 0; }
+        .vendor-auth-card label { display: block; margin-bottom: .3rem; font-weight: 700; }
+        .vendor-auth-card input:not([type="hidden"]) { width: 100%; min-height: 44px; padding: .65rem .75rem; border: 1px solid #cbd5ce; border-radius: 8px; color: #183329; font: inherit; }
+        .vendor-auth-card input:focus-visible, .vendor-auth-card button:focus-visible, .vendor-auth-links a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .vendor-auth-card button { min-height: 44px; padding: .65rem .9rem; border: 0; border-radius: 8px; background: #176b45; color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+        .vendor-auth-error { margin: 0 0 .8rem; padding: .7rem .85rem; border-left: 4px solid #922f25; background: #fff0ed; color: #70251e; }
+        .vendor-auth-links { margin-top: 1rem; line-height: 1.8; }
+        .vendor-auth-links a { color: #176b45; font-weight: 700; }
+        @media (min-width: 640px) { .vendor-auth-page { padding-top: 3rem; } .vendor-auth-card { padding: 1.4rem; } }
+    </style>
+    <main class="vendor-auth-page">
+        <header class="vendor-auth-heading">
+            <h1>Vendor login</h1>
+            <p>Sign in to manage your shop, listings, and orders.</p>
+        </header>
+        <form class="vendor-auth-card" method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <p class="vendor-auth-error" role="alert">We could not sign you in with those details. Check your credentials and use a vendor account.</p>
+            {% endif %}
+            {{ form.as_p }}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            <button type="submit">Log in</button>
+        </form>
+        <div class="vendor-auth-links">
+            <p>New vendor? <a href="{% url 'vendor_register' %}">Create a vendor account</a></p>
+            <p>Shopping as a customer? <a href="{% url 'login' %}">Customer login</a></p>
+        </div>
+    </main>
+{% endblock %}

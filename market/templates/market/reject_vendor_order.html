@@ -1,0 +1,19 @@
+{% extends "market/base.html" %}
+
+{% block title %}Confirm Order Rejection | SBJI@Home{% endblock %}
+
+{% block content %}
+    <h1>Reject your items from order #{{ order.id }}?</h1>
+    <p>This rejects only the items supplied by {{ vendor.shop_name|default:vendor.name }}. Other vendors’ items in the customer order are not affected.</p>
+    <p>Your items will be returned to stock.</p>
+    <ul>
+        {% for item in items %}
+            <li>{{ item.quantity }} × {% if item.product_name_snapshot %}{{ item.product_name_snapshot }}{% elif item.product %}{{ item.product.name }}{% else %}Product information unavailable{% endif %}</li>
+        {% endfor %}
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirm rejection</button>
+    </form>
+    <p><a href="{% url 'vendor_order_detail' order.id %}">Cancel</a></p>
+{% endblock %}

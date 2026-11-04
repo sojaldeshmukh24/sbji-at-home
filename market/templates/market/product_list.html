@@ -1,0 +1,146 @@
+{% extends "market/base.html" %}
+
+{% block title %}Shop fresh products | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .marketplace-page { --market-green: #176143; --market-green-dark: #0d3927; --market-ink: #17291e; --market-muted: #718078; --market-line: #e5eee8; max-width: 1460px; margin: 0 auto; padding: 1.35rem 1.15rem 3rem; color: var(--market-ink); }
+        .marketplace-eyebrow { display: inline-flex; margin: 0 0 .55rem; padding: .4rem .7rem; border: 1px solid #d2e7d8; border-radius: 999px; background: #fff; color: var(--market-green-dark); font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+        .marketplace-title { margin: 0; font-size: clamp(1.9rem, 4vw, 2.65rem); letter-spacing: -.05em; }
+        .marketplace-intro { margin: .35rem 0 1rem; color: var(--market-muted); }
+        .marketplace-filters { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; gap: .8rem; margin: 1.15rem 0 1.1rem; padding: 1rem; border: 1px solid var(--market-line); border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .marketplace-search { display: flex; min-width: 0; gap: .5rem; }
+        .marketplace-search input { flex: 1 1 0; width: 0; min-width: 0; }
+        .marketplace-search button { flex: 0 0 auto; }
+        .market-search-clear { display: inline-flex; min-height: 42px; flex: 0 0 auto; align-items: center; padding: .45rem .55rem; color: var(--market-green-dark); font-size: .82rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+        .marketplace-filters input, .marketplace-filters select { width: 100%; min-width: 0; min-height: 44px; padding: .55rem .7rem; border: 1px solid #cbd5ce; border-radius: 10px; background: #fff; color: var(--market-ink); font: inherit; }
+        .marketplace-filters input:focus-visible, .marketplace-filters select:focus-visible { border-color: var(--market-green); outline: 3px solid rgb(23 107 69 / 15%); }
+        .marketplace-filters button, .market-clear-filters { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .55rem .85rem; border: 0; border-radius: 10px; background: var(--market-green); color: #fff; font: inherit; font-weight: 750; text-decoration: none; cursor: pointer; }
+        .market-clear-filters { background: #eff5f0; color: var(--market-green-dark); }
+        .market-filter-row { display: grid; min-width: 0; grid-template-columns: minmax(0, 1fr); gap: .65rem; }
+        .market-filter-field { display: grid; min-width: 0; gap: .3rem; color: var(--market-muted); font-size: .84rem; font-weight: 650; }
+        .market-category-nav { display: flex; gap: .5rem; overflow-x: auto; margin: 0 0 1.1rem; padding: .15rem .1rem .55rem; }
+        .market-category-link { flex: 0 0 auto; padding: .55rem .8rem; border: 1px solid var(--market-line); border-radius: 999px; background: #fff; color: var(--market-ink); font-size: .84rem; font-weight: 700; text-decoration: none; }
+        .market-category-link-active { border-color: var(--market-green); background: #eaf4ed; color: var(--market-green-dark); }
+        .market-active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: 0 0 1rem; }
+        .market-filter-chip { padding: .35rem .6rem; border-radius: 999px; background: #eaf4ed; color: var(--market-green-dark); font-size: .82rem; }
+        .market-results-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin: 1rem 0 .75rem; }
+        .market-results-heading h2 { margin: 0; font-size: 1.2rem; }
+        .market-results-count { color: var(--market-muted); font-size: .85rem; }
+        .market-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
+        .market-product-grid > li { min-width: 0; }
+        .market-empty { grid-column: 1 / -1; padding: 1.7rem 1rem; border: 1px dashed #cbd5ce; border-radius: 16px; background: #fff; color: var(--market-muted); text-align: center; }
+        .market-empty strong { display: block; margin-bottom: .3rem; color: var(--market-ink); font-size: 1.1rem; }
+        .market-empty a { display: inline-flex; min-height: 42px; align-items: center; margin-top: .75rem; padding: .55rem .85rem; border-radius: 10px; background: var(--market-green); color: #fff; font-weight: 750; text-decoration: none; }
+        .recently-viewed { margin-top: 2.8rem; }
+        .recently-viewed h2 { margin: 0; font-size: 1.55rem; letter-spacing: -.03em; }
+        .recently-viewed-intro { margin: .3rem 0 .75rem; color: var(--market-muted); font-size: .9rem; }
+        .recently-viewed-grid { display: grid; grid-auto-columns: minmax(190px, 76%); grid-auto-flow: column; gap: .7rem; overflow-x: auto; margin: 0; padding: .2rem .1rem .65rem; list-style: none; scroll-snap-type: x mandatory; contain: layout; }
+        .recently-viewed-grid > li { min-width: 0; scroll-snap-align: start; }
+        @media (min-width: 560px) { .market-filter-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .market-product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; } }
+        @media (min-width: 900px) { .market-product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; } .market-product-grid .product-card-image { height: 205px; } .recently-viewed-grid { grid-auto-columns: minmax(200px, 1fr); } }
+        @media (max-width: 390px) { .market-product-grid { gap: .5rem; } }
+    </style>
+    <main class="marketplace-page">
+        <p class="marketplace-eyebrow">Local produce marketplace</p>
+        <h1 class="marketplace-title">Shop fresh</h1>
+        <p class="marketplace-intro">Discover local produce, compare listings, and find your everyday favourites.</p>
+        <form class="marketplace-filters" method="get" aria-label="Search, filter and sort products" data-loading-state>
+            <div class="marketplace-search">
+                {{ form.name }}
+                <button type="submit">Search</button>
+                {% if form.name.value %}
+                    <a class="market-search-clear" href="{% url 'product_list' %}?category={{ selected_category.id|default:'' }}&availability={{ selected_availability }}&sort={{ selected_sort }}" aria-label="Clear search and keep other filters">Clear search</a>
+                {% endif %}
+            </div>
+            <div class="market-filter-row">
+                <label class="market-filter-field" for="category-filter">
+                    Category
+                    <select id="category-filter" name="category">
+                        <option value="">All products</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}"{% if selected_category.id == category.id %} selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="market-filter-field" for="availability-filter">
+                    Availability
+                    <select id="availability-filter" name="availability">
+                        <option value=""{% if not selected_availability %} selected{% endif %}>All availability</option>
+                        <option value="in_stock"{% if selected_availability == 'in_stock' %} selected{% endif %}>In stock only</option>
+                    </select>
+                </label>
+                <label class="market-filter-field" for="sort-products">
+                    Sort by
+                    <select id="sort-products" name="sort">
+                        <option value="relevance"{% if selected_sort == 'relevance' %} selected{% endif %}>Recommended</option>
+                        <option value="price_asc"{% if selected_sort == 'price_asc' %} selected{% endif %}>Price: Low to High</option>
+                        <option value="price_desc"{% if selected_sort == 'price_desc' %} selected{% endif %}>Price: High to Low</option>
+                        <option value="name_asc"{% if selected_sort == 'name_asc' %} selected{% endif %}>Name: A to Z</option>
+                        <option value="name_desc"{% if selected_sort == 'name_desc' %} selected{% endif %}>Name: Z to A</option>
+                        <option value="availability"{% if selected_sort == 'availability' %} selected{% endif %}>Availability</option>
+                        <option value="newest"{% if selected_sort == 'newest' %} selected{% endif %}>Newest</option>
+                    </select>
+                </label>
+            </div>
+            <button type="submit">Apply filters</button>
+        </form>
+
+        <nav class="market-category-nav" aria-label="Browse by category">
+            <a class="market-category-link{% if not selected_category %} market-category-link-active{% endif %}" href="{% url 'product_list' %}">All categories</a>
+            {% for category in categories %}
+                <a class="market-category-link{% if selected_category.id == category.id %} market-category-link-active{% endif %}" href="{% url 'product_list' %}?category={{ category.id }}{% if form.name.value %}&name={{ form.name.value|urlencode }}{% endif %}{% if selected_availability %}&availability={{ selected_availability }}{% endif %}{% if selected_sort != 'relevance' %}&sort={{ selected_sort }}{% endif %}">{{ category.name }}</a>
+            {% endfor %}
+        </nav>
+
+        {% if active_filters %}
+            <div class="market-active-filters" aria-label="Active filters">
+                <strong>Active filters:</strong>
+                {% for active_filter in active_filters %}
+                    <span class="market-filter-chip">{{ active_filter }}</span>
+                {% endfor %}
+                <a class="market-clear-filters" href="{% url 'product_list' %}">Clear filters</a>
+            </div>
+        {% endif %}
+
+        <div class="market-results-heading">
+            <h2>{% if searched %}Search results{% elif selected_category %}{{ selected_category.name }}{% else %}All products{% endif %}</h2>
+            <span class="market-results-count">{{ products|length }} listing{{ products|length|pluralize }}</span>
+        </div>
+        <ul class="market-product-grid">
+            {% for product in products %}
+                <li>
+                    {% include "market/partials/product_card.html" with product=product wishlist_product_ids=wishlist_product_ids wishlist_next=request.get_full_path card_key="listing" %}
+                </li>
+            {% empty %}
+                <li class="market-empty">
+                    <strong>{% if searched %}No products found                    {% elif selected_availability %}No products match your filters{% elif selected_category %}No products available in this category yet{% else %}No products available{% endif %}</strong>
+                    {% if searched %}
+                        <span>No products match the current search and filters. Try another search or browse the categories below.</span>
+                    {% elif selected_category and not selected_availability %}
+                        <span>Try another category or see all available listings.</span>
+                    {% else %}
+                        <span>Change your filters or browse the available listings.</span>
+                    {% endif %}
+                    <a href="{% url 'product_list' %}">Browse Categories</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <section class="recently-viewed" aria-labelledby="recently-viewed-heading">
+            <h2 id="recently-viewed-heading">Recently Viewed</h2>
+            {% if recently_viewed_products %}
+                <p class="recently-viewed-intro">Pick up where you left off.</p>
+                <ul class="recently-viewed-grid">
+                    {% for product in recently_viewed_products %}
+                        <li>
+                            {% include "market/partials/product_card.html" with product=product wishlist_product_ids=wishlist_product_ids wishlist_next=request.get_full_path card_key="recent" %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="market-empty">Products you view will appear here.</p>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

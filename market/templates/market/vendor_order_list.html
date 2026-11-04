@@ -1,0 +1,71 @@
+{% extends "market/base.html" %}
+
+{% block title %}Your Orders | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .vendor-page { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .vendor-heading { margin-bottom: 1rem; }
+        .vendor-heading h1 { margin: 0 0 .25rem; font-size: clamp(1.55rem, 4vw, 2rem); }
+        .vendor-heading p { margin: 0; color: #617269; }
+        .vendor-navigation { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; padding: .45rem; border: 1px solid #e2eae4; border-radius: 13px; background: #fff; }
+        .vendor-navigation a { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .7rem; border-radius: 9px; color: #183329; font-size: .87rem; font-weight: 700; text-decoration: none; }
+        .vendor-navigation a:hover, .vendor-navigation a[aria-current="page"] { background: #e8f4e9; color: #155d3c; }
+        .vendor-navigation a:focus-visible, .vendor-page a:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .vendor-order-list { display: grid; gap: .8rem; margin: 0; padding: 0; list-style: none; }
+        .vendor-order-card { min-width: 0; padding: 1rem; border: 1px solid #e2eae4; border-radius: 15px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .vendor-order-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .65rem; }
+        .vendor-order-top h2 { margin: 0; font-size: 1.05rem; }
+        .vendor-order-top h2 a { color: #183329; text-decoration: none; }
+        .vendor-order-top h2 a:hover { color: #176b45; text-decoration: underline; }
+        .vendor-order-status, .vendor-order-payment { display: inline-flex; min-height: 30px; align-items: center; padding: .3rem .55rem; border-radius: 999px; background: #e8f4e9; color: #155d3c; font-size: .8rem; font-weight: 750; }
+        .vendor-order-payment { background: #f2f4f2; color: #435149; }
+        .vendor-order-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; margin: .8rem 0; }
+        .vendor-order-meta span { display: block; }
+        .vendor-meta-label { color: #617269; font-size: .76rem; }
+        .vendor-meta-value { margin-top: .15rem; font-weight: 750; overflow-wrap: anywhere; }
+        .vendor-order-items { margin: .6rem 0; padding-left: 1.2rem; color: #435149; }
+        .vendor-order-items li { margin: .3rem 0; overflow-wrap: anywhere; }
+        .vendor-order-link { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .75rem; border-radius: 10px; background: #176b45; color: #fff; font-size: .86rem; font-weight: 750; text-decoration: none; }
+        .vendor-empty { padding: 2rem 1rem; border: 1px dashed #cbd5ce; border-radius: 15px; background: #fff; color: #617269; text-align: center; }
+        .vendor-empty strong { display: block; margin-bottom: .3rem; color: #183329; font-size: 1.05rem; }
+        @media (min-width: 640px) { .vendor-page { padding: 2rem 1.25rem 3.5rem; } .vendor-order-card { padding: 1.2rem; } .vendor-order-meta { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    </style>
+    <main class="vendor-page">
+        <header class="vendor-heading">
+            <h1>Your orders</h1>
+            <p>Orders containing products from {{ vendor.shop_name|default:vendor.name }}.</p>
+        </header>
+        {% include "market/vendor_navigation.html" %}
+        {% if vendor_orders %}
+            <ul class="vendor-order-list">
+                {% for vendor_order in vendor_orders %}
+                    <li class="vendor-order-card">
+                        <div class="vendor-order-top">
+                            <h2><a href="{% url 'vendor_order_detail' vendor_order.order_id %}">Order #{{ vendor_order.order_id }}</a></h2>
+                            <span class="vendor-order-status" aria-label="Your fulfillment status: {{ vendor_order.get_status_display }}">● {{ vendor_order.get_status_display }}</span>
+                        </div>
+                        <div class="vendor-order-meta">
+                            <div><span class="vendor-meta-label">Order date</span><span class="vendor-meta-value">{{ vendor_order.order.order_date|date:"j M Y, g:i A" }}</span></div>
+                            <div><span class="vendor-meta-label">Your items</span><span class="vendor-meta-value">{{ vendor_order.vendor_item_count }} item{{ vendor_order.vendor_item_count|pluralize }}</span></div>
+                            <div><span class="vendor-meta-label">Your subtotal</span><span class="vendor-meta-value">₹{{ vendor_order.vendor_subtotal|floatformat:2 }}</span></div>
+                            <div><span class="vendor-meta-label">Payment</span><span class="vendor-order-payment">{{ vendor_order.order.get_payment_method_display|default:"Not recorded" }} · {{ vendor_order.order.get_payment_status_display }}</span></div>
+                        </div>
+                        <ul class="vendor-order-items">
+                            {% for item in vendor_order.items.all %}
+                                <li>
+                                    {% if item.product_name_snapshot %}{{ item.product_name_snapshot }}{% elif item.product %}{{ item.product.name }}{% else %}Product information unavailable{% endif %}
+                                    — {{ item.quantity }}{% if item.product_units_snapshot %} {{ item.product_units_snapshot }}{% elif item.product %} {{ item.product.units }}{% endif %}
+                                    · {{ item.unit_price|floatformat:2 }} each
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <a class="vendor-order-link" href="{% url 'vendor_order_detail' vendor_order.order_id %}">View your order</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="vendor-empty"><strong>No orders yet</strong>No orders contain your products yet. Orders for your products will appear here.</div>
+        {% endif %}
+    </main>
+{% endblock %}

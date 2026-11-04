@@ -1,0 +1,61 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}Order #{{ order.id }}{% endblock %}
+{% block admin_heading %}Order #{{ order.id }}{% endblock %}
+{% block admin_description %}Read-only marketplace order record with historical item values.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-labelledby="order-overview-heading">
+        <h2 id="order-overview-heading">Order overview</h2>
+        <dl class="admin-definition-list">
+            <div><dt>Order date</dt><dd>{{ order.order_date|date:"j M Y, g:i A" }}</dd></div>
+            <div><dt>Order status</dt><dd>{{ order.get_status_display|default:"Unspecified" }}</dd></div>
+            <div><dt>Payment method</dt><dd>{{ order.get_payment_method_display|default:"Not recorded" }}</dd></div>
+            <div><dt>Payment status</dt><dd>{{ order.get_payment_status_display }}</dd></div>
+            <div><dt>Order total</dt><dd>₹{{ order_total|floatformat:2 }}</dd></div>
+            <div><dt>Stock reserved</dt><dd>{% if order.stock_reserved %}Yes{% else %}No{% endif %}</dd></div>
+        </dl>
+    </section>
+    <section class="admin-panel" aria-labelledby="order-customer-heading">
+        <h2 id="order-customer-heading">Customer and delivery</h2>
+        <dl class="admin-definition-list">
+            <div><dt>Customer</dt><dd><a href="{% url 'market_admin_customer_detail' order.customer_id %}">{{ order.customer.user.get_full_name|default:order.customer.user.username }}</a> ({{ order.customer.user.username }})</dd></div>
+            <div><dt>Email</dt><dd>{{ order.customer.user.email|default:"Not provided" }}</dd></div>
+            <div><dt>Delivery recipient</dt><dd>{{ order.delivery_name|default:order.customer.user.get_full_name|default:order.customer.user.username }}</dd></div>
+            <div><dt>Delivery phone</dt><dd>{{ order.delivery_phone|default:order.customer.phone }}</dd></div>
+            <div><dt>Delivery address</dt><dd>{{ order.delivery_address_line_1|default:order.customer.address }}{% if order.delivery_address_line_2 %}, {{ order.delivery_address_line_2 }}{% endif %}{% if order.delivery_city %}, {{ order.delivery_city }}{% endif %}{% if order.delivery_state %}, {{ order.delivery_state }}{% endif %} {{ order.delivery_postal_code }}</dd></div>
+            {% if order.delivery_slot_date %}<div><dt>Delivery slot</dt><dd>{{ order.delivery_slot_date|date:"j M Y" }} · {{ order.delivery_slot_name }}{% if order.delivery_slot_start_time and order.delivery_slot_end_time %} ({{ order.delivery_slot_start_time|time:"g:i A" }}–{{ order.delivery_slot_end_time|time:"g:i A" }}){% endif %}</dd></div>{% endif %}
+        </dl>
+    </section>
+    <section class="admin-panel" aria-labelledby="order-items-heading">
+        <h2 id="order-items-heading">Order items</h2>
+        {% if items %}<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th scope="col">Product</th><th scope="col">Vendor</th><th scope="col">Quantity</th><th scope="col">Historical unit price</th><th scope="col">Subtotal</th></tr></thead>
+            <tbody>{% for item in items %}<tr>
+                <td data-label="Product">{{ item.admin_product_name }}{% if not item.product %}<span class="admin-muted"> · listing deleted</span>{% endif %}</td>
+                <td data-label="Vendor">{{ item.admin_vendor_name }}</td>
+                <td data-label="Quantity">{{ item.quantity }} {{ item.admin_product_units }}</td>
+                <td data-label="Historical unit price">₹{{ item.unit_price|floatformat:2 }}</td>
+                <td data-label="Subtotal">₹{{ item.admin_line_total|floatformat:2 }}</td>
+            </tr>{% endfor %}</tbody>
+        </table></div>{% else %}<div class="admin-empty"><strong>No order items</strong>This order has no recorded line items.</div>{% endif %}
+        <p class="admin-muted">COD and online payment states are displayed from the existing order record. Payment credentials and provider identifiers are not shown.</p>
+    </section>
+    <section class="admin-panel" aria-labelledby="admin-status-history-heading">
+        <h2 id="admin-status-history-heading">Status history</h2>
+        {% if status_history %}
+            <ol class="admin-item-list">
+                {% for change in status_history %}
+                    <li class="admin-item">
+                        <div>
+                            <strong>{% if change.vendor_order and change.vendor_order.vendor %}{{ change.vendor_order.vendor.shop_name|default:change.vendor_order.vendor.name }} fulfillment{% elif change.vendor_order %}Sbji@Home platform fulfillment{% else %}Marketplace order{% endif %}</strong>
+                            <div>{% if change.previous_status %}{{ change.previous_status_label }} → {% else %}Order placed · {% endif %}{{ change.new_status_label }}</div>
+                            {% if change.actor %}<div class="admin-muted">Updated by {{ change.actor.username }}</div>{% else %}<div class="admin-muted">System update</div>{% endif %}
+                        </div>
+                        <time datetime="{{ change.created_at|date:'c' }}">{{ change.created_at|date:"j M Y, g:i A" }}</time>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}<div class="admin-empty"><strong>No status history</strong>Lifecycle events will appear here as the order progresses.</div>{% endif %}
+    </section>
+{% endblock %}

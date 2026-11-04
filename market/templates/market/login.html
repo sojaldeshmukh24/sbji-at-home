@@ -1,0 +1,44 @@
+{% extends "market/base.html" %}
+
+{% block title %}Login | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .shared-login-page { max-width: 480px; margin: 0 auto; padding: 2rem 1rem 3.5rem; color: #183329; }
+        .shared-login-card { padding: 1.5rem; border: 1px solid #e2eae4; border-radius: 20px; background: #fff; box-shadow: 0 14px 40px rgb(20 45 30 / 8%); }
+        .shared-login-card h1 { margin: 0; font-size: 2rem; letter-spacing: -.045em; }
+        .shared-login-intro { margin: .4rem 0 1.2rem; color: #617269; line-height: 1.5; }
+        .shared-login-card form p { margin: .85rem 0; }
+        .shared-login-card label { display: block; margin-bottom: .35rem; color: #344a3d; font-size: .86rem; font-weight: 750; }
+        .shared-login-card input:not([type="hidden"]) { width: 100%; min-height: 46px; padding: .65rem .75rem; border: 1px solid #cbd5ce; border-radius: 10px; background: #fbfcfa; color: #183329; font: inherit; }
+        .shared-login-card button { width: 100%; min-height: 48px; margin-top: .5rem; border: 0; border-radius: 10px; background: #176b45; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+        .shared-login-card button:hover { background: #105236; }
+        .shared-login-error { margin: 0 0 .9rem; padding: .75rem .85rem; border-left: 4px solid #922f25; border-radius: 8px; background: #fff0ed; color: #70251e; }
+        .shared-login-signup { margin: 1rem 0 0; color: #617269; font-size: .88rem; text-align: center; }
+        .shared-login-signup a { color: #176b45; font-weight: 750; }
+        @media (min-width: 640px) { .shared-login-page { padding-top: 3rem; } .shared-login-card { padding: 2rem; } }
+    </style>
+    <main class="shared-login-page">
+        <section class="shared-login-card" aria-labelledby="shared-login-title">
+            <h1 id="shared-login-title">Welcome back</h1>
+            <p class="shared-login-intro">Log in with your customer or vendor account.</p>
+            {% if form.errors %}
+                <p class="shared-login-error" role="alert">Your username and password did not match. Please try again.</p>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <p>
+                    <label for="id_username">Username</label>
+                    <input type="text" id="id_username" name="username" autocomplete="username" required>
+                </p>
+                <p>
+                    <label for="id_password">Password</label>
+                    <input type="password" id="id_password" name="password" autocomplete="current-password" required>
+                </p>
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+                <button type="submit">Log in</button>
+            </form>
+            <p class="shared-login-signup">New to SBJI@Home? <a href="{% url 'register' %}">Join us</a> to choose customer or vendor signup.</p>
+        </section>
+    </main>
+{% endblock %}

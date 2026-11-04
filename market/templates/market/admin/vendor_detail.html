@@ -1,0 +1,52 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}Vendor {{ vendor.name }}{% endblock %}
+{% block admin_heading %}Vendor profile{% endblock %}
+{% block admin_description %}Shop information, listings, and fulfillment activity.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-labelledby="vendor-details-heading">
+        <h2 id="vendor-details-heading">{{ vendor.shop_name|default:vendor.name }}</h2>
+        <dl class="admin-definition-list">
+            <div><dt>Vendor name</dt><dd>{{ vendor.name }}</dd></div>
+            <div><dt>Shop name</dt><dd>{{ vendor.shop_name|default:"Not provided" }}</dd></div>
+            <div><dt>Account</dt><dd>{% if vendor.user and vendor.user.is_active %}Active{% else %}Inactive or unlinked{% endif %}</dd></div>
+            <div><dt>Username</dt><dd>{{ vendor.user.username|default:"No linked account" }}</dd></div>
+            <div><dt>Email</dt><dd>{{ vendor.email|default:"Not provided" }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ vendor.phone|default:"Not provided" }}</dd></div>
+            <div><dt>Shop address</dt><dd>{{ vendor.shop_address|default:"Not provided" }}</dd></div>
+            <div><dt>Products</dt><dd>{{ product_count }}</dd></div>
+            <div><dt>Vendor orders</dt><dd>{{ order_count }}</dd></div>
+            {% if vendor.description %}<div><dt>Description</dt><dd>{{ vendor.description }}</dd></div>{% endif %}
+        </dl>
+        {% if vendor.user and perms.auth.change_user %}<p><a class="admin-secondary-link" href="{% url 'admin:auth_user_change' vendor.user_id %}">Manage account</a></p>{% endif %}
+    </section>
+    <section class="admin-panel" aria-labelledby="vendor-products-heading">
+        <h2 id="vendor-products-heading">Products</h2>
+        {% if products %}<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th scope="col">Product</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Listing</th></tr></thead>
+            <tbody>{% for product in products %}<tr>
+                <td data-label="Product">{% if perms.market.change_product %}<a href="{% url 'admin:market_product_change' product.id %}">{{ product.name }}</a>{% else %}{{ product.name }}{% endif %}</td>
+                <td data-label="Category">{{ product.category.name }}</td>
+                <td data-label="Price">₹{{ product.price|floatformat:2 }} / {{ product.units }}</td>
+                <td data-label="Stock">{{ product.stock }} {{ product.units }}</td>
+                <td data-label="Listing">{% if product.stock > 0 %}Available{% else %}Out of stock{% endif %}</td>
+            </tr>{% endfor %}</tbody>
+        </table></div>{% else %}<div class="admin-empty"><strong>No products found</strong>This vendor has no current listings.</div>{% endif %}
+    </section>
+    <section class="admin-panel" aria-labelledby="vendor-orders-heading">
+        <h2 id="vendor-orders-heading">Recent vendor orders</h2>
+        {% if vendor_orders %}<div class="admin-table-wrap"><table class="admin-table">
+            <thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Date</th><th scope="col">Vendor status</th><th scope="col">Items subtotal</th><th scope="col">Details</th></tr></thead>
+            <tbody>{% for vendor_order in vendor_orders %}<tr>
+                <td data-label="Order">#{{ vendor_order.order_id }}</td>
+                <td data-label="Customer">{{ vendor_order.order.customer.user.get_full_name|default:vendor_order.order.customer.user.username }}</td>
+                <td data-label="Date">{{ vendor_order.order.order_date|date:"j M Y, g:i A" }}</td>
+                <td data-label="Vendor status">{{ vendor_order.get_status_display }}</td>
+                <td data-label="Items subtotal">₹{{ vendor_order.admin_subtotal|floatformat:2 }}</td>
+                <td data-label="Details"><a href="{% url 'market_admin_order_detail' vendor_order.order_id %}">View order</a></td>
+            </tr>{% endfor %}</tbody>
+        </table></div>{% else %}<div class="admin-empty"><strong>No orders found</strong>Orders for this vendor will appear here.</div>{% endif %}
+        {% if order_count > 10 %}<p class="admin-muted">Showing the latest 10 vendor orders.</p>{% endif %}
+    </section>
+{% endblock %}

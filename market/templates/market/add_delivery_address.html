@@ -1,0 +1,13 @@
+{% extends "market/base.html" %}
+
+{% block title %}Add Delivery Address | SBJI@Home{% endblock %}
+
+{% block content %}
+    <h1>Add delivery address</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save address</button>
+    </form>
+    <p><a href="{% url 'customer_profile' %}">Back to my profile</a></p>
+{% endblock %}

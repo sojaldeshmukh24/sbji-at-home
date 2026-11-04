@@ -1,0 +1,8 @@
+<nav class="vendor-navigation" aria-label="Vendor navigation">
+    <a href="{% url 'vendor_dashboard' %}"{% if request.resolver_match.url_name == 'vendor_dashboard' %} aria-current="page"{% endif %}>Dashboard</a>
+    <a href="{% url 'vendor_dashboard' %}#products">Products</a>
+    <a href="{% url 'add_vegetable' %}"{% if request.resolver_match.url_name == 'add_vegetable' %} aria-current="page"{% endif %}>Add product</a>
+    <a href="{% url 'vendor_order_list' %}"{% if request.resolver_match.url_name == 'vendor_order_list' or request.resolver_match.url_name == 'vendor_order_detail' %} aria-current="page"{% endif %}>Orders</a>
+    <a href="{% url 'vendor_dashboard' %}#shop-profile">Shop profile</a>
+    <a href="{% url 'logout' %}">Log out</a>
+</nav>

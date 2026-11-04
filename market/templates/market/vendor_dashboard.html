@@ -1,0 +1,208 @@
+{% extends "market/base.html" %}
+
+{% block title %}Vendor Dashboard | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .vendor-page { max-width: 1200px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .vendor-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .75rem; margin-bottom: 1rem; }
+        .vendor-header h1 { margin: 0 0 .25rem; font-size: clamp(1.55rem, 4vw, 2rem); }
+        .vendor-header p { margin: 0; color: #617269; }
+        .vendor-navigation { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; padding: .45rem; border: 1px solid #e2eae4; border-radius: 13px; background: #fff; }
+        .vendor-navigation a { display: inline-flex; min-height: 42px; align-items: center; padding: .55rem .7rem; border-radius: 9px; color: #183329; font-size: .87rem; font-weight: 700; text-decoration: none; }
+        .vendor-navigation a:hover, .vendor-navigation a[aria-current="page"] { background: #e8f4e9; color: #155d3c; }
+        .vendor-navigation a:focus-visible, .vendor-page a:focus-visible, .vendor-page button:focus-visible, .vendor-page input:focus-visible { outline: 3px solid #e3a928; outline-offset: 2px; }
+        .vendor-card { min-width: 0; padding: 1rem; border: 1px solid #e2eae4; border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .vendor-card h2 { margin: 0 0 .7rem; font-size: 1.12rem; }
+        .vendor-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin-bottom: 1rem; }
+        .vendor-stat { min-width: 0; padding: .85rem; border: 1px solid #e2eae4; border-radius: 13px; background: #fff; }
+        .vendor-stat-label { display: block; color: #617269; font-size: .8rem; }
+        .vendor-stat-value { display: block; margin-top: .2rem; color: #176b45; font-size: 1.35rem; font-weight: 850; overflow-wrap: anywhere; }
+        .vendor-profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem 1rem; margin: 0; }
+        .vendor-profile-grid div { min-width: 0; }
+        .vendor-profile-grid dt { color: #617269; font-size: .78rem; }
+        .vendor-profile-grid dd { margin: .15rem 0 0; overflow-wrap: anywhere; font-weight: 650; }
+        .vendor-section { margin-top: 1rem; }
+        .vendor-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .7rem; }
+        .vendor-section-heading h2 { margin: 0; }
+        .vendor-primary-link, .vendor-action-link {
+            display: inline-flex;
+            min-height: 42px;
+            align-items: center;
+            justify-content: center;
+            padding: .55rem .75rem;
+            border: 1px solid #176b45;
+            border-radius: 10px;
+            background: #176b45;
+            color: #fff;
+            font-size: .85rem;
+            font-weight: 750;
+            text-decoration: none;
+        }
+        .vendor-action-link { min-height: 38px; border-color: #cbd5ce; background: #fff; color: #183329; }
+        .vendor-table-wrap { overflow-x: auto; }
+        .vendor-table { width: 100%; border-collapse: collapse; }
+        .vendor-table th, .vendor-table td { padding: .7rem .55rem; border-bottom: 1px solid #e2eae4; text-align: left; vertical-align: top; }
+        .vendor-table th { color: #617269; font-size: .78rem; }
+        .vendor-product-list, .vendor-recent-list { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
+        .vendor-product-card, .vendor-recent-card { min-width: 0; padding: .85rem; border: 1px solid #e2eae4; border-radius: 13px; background: #fff; }
+        .vendor-product-top, .vendor-recent-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .7rem; }
+        .vendor-product-image { width: 58px; height: 58px; flex: 0 0 auto; border-radius: 10px; background: #f2f6f2; object-fit: cover; }
+        .vendor-product-name, .vendor-recent-name { margin: 0; font-weight: 800; overflow-wrap: anywhere; }
+        .vendor-product-meta, .vendor-recent-meta { margin: .2rem 0; color: #617269; font-size: .84rem; overflow-wrap: anywhere; }
+        .vendor-availability { display: inline-flex; min-height: 28px; align-items: center; padding: .25rem .5rem; border-radius: 999px; background: #e8f4e9; color: #155d3c; font-size: .78rem; font-weight: 750; }
+        .vendor-availability-low { background: #fff4d6; color: #7b4b00; }
+        .vendor-availability-out { background: #fff0ed; color: #922f25; }
+        .vendor-stock-form { display: flex; flex-wrap: wrap; align-items: end; gap: .45rem; margin-top: .6rem; }
+        .vendor-stock-form label { width: 100%; color: #617269; font-size: .78rem; }
+        .vendor-stock-form input { width: 5rem; min-height: 40px; padding: .45rem; border: 1px solid #cbd5ce; border-radius: 9px; font: inherit; }
+        .vendor-stock-form button { min-height: 40px; padding: .5rem .65rem; border: 0; border-radius: 9px; background: #176b45; color: #fff; font: inherit; font-size: .82rem; font-weight: 750; cursor: pointer; }
+        .vendor-product-actions { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .55rem; }
+        .vendor-empty { padding: 1.3rem .8rem; border: 1px dashed #cbd5ce; border-radius: 12px; color: #617269; text-align: center; }
+        .vendor-empty strong { display: block; margin-bottom: .3rem; color: #183329; }
+        .vendor-two-column { display: grid; gap: 1rem; }
+        .vendor-page form { margin-bottom: 0; }
+        #products, #shop-profile { scroll-margin-top: 100px; }
+        @media (min-width: 600px) { .vendor-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } .vendor-product-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 900px) {
+            .vendor-page { padding: 2rem 1.25rem 3.5rem; }
+            .vendor-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+            .vendor-two-column { grid-template-columns: minmax(0, 1.35fr) minmax(300px, .9fr); align-items: start; }
+            .vendor-card { padding: 1.2rem; }
+            .vendor-product-list { display: none; }
+        }
+        @media (max-width: 899px) { .vendor-table-wrap { display: none; } }
+    </style>
+    <main class="vendor-page">
+        <header class="vendor-header">
+            <div>
+                <h1>Vendor dashboard</h1>
+                <p>Welcome back, {{ vendor.shop_name|default:vendor.name }}. Here’s your shop at a glance.</p>
+            </div>
+            <a class="vendor-primary-link" href="{% url 'add_vegetable' %}">Add product</a>
+        </header>
+        {% include "market/vendor_navigation.html" %}
+        <section aria-label="Shop statistics">
+            <div class="vendor-stats">
+                <article class="vendor-stat"><span class="vendor-stat-label">Products</span><span class="vendor-stat-value">{{ product_stats.total }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Low stock (≤ {{ low_stock_threshold }})</span><span class="vendor-stat-value">{{ product_stats.low_stock }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Out of stock</span><span class="vendor-stat-value">{{ product_stats.out_of_stock }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Orders</span><span class="vendor-stat-value">{{ order_stats.total }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Delivered sales</span><span class="vendor-stat-value">₹{{ sales_stats.sales|floatformat:2 }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Awaiting action</span><span class="vendor-stat-value">{{ order_stats.pending }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">In progress</span><span class="vendor-stat-value">{{ order_stats.in_progress }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Delivered orders</span><span class="vendor-stat-value">{{ order_stats.delivered }}</span></article>
+                <article class="vendor-stat"><span class="vendor-stat-label">Products sold (delivered)</span><span class="vendor-stat-value">{{ sales_stats.products_sold }}</span></article>
+            </div>
+            <p class="vendor-product-meta">Sales include only items attached to your delivered vendor orders; this is not a payout or settlement figure.</p>
+        </section>
+        <div class="vendor-two-column">
+            <section class="vendor-card vendor-section" aria-labelledby="recent-orders-heading">
+                <div class="vendor-section-heading">
+                    <h2 id="recent-orders-heading">Recent orders</h2>
+                    <a class="vendor-action-link" href="{% url 'vendor_order_list' %}">View all orders</a>
+                </div>
+                {% if recent_orders %}
+                    <ul class="vendor-recent-list">
+                        {% for vendor_order in recent_orders %}
+                            <li class="vendor-recent-card">
+                                <div class="vendor-recent-top">
+                                    <p class="vendor-recent-name">Order #{{ vendor_order.order_id }}</p>
+                                    <span class="vendor-availability">{{ vendor_order.get_status_display }}</span>
+                                </div>
+                                <p class="vendor-recent-meta">{{ vendor_order.order.order_date|date:"j M Y, g:i A" }} · {{ vendor_order.vendor_item_count }} item{{ vendor_order.vendor_item_count|pluralize }}</p>
+                                <p class="vendor-recent-meta">Your items: ₹{{ vendor_order.vendor_subtotal|floatformat:2 }} · Payment: {{ vendor_order.order.get_payment_status_display }}</p>
+                                <a class="vendor-action-link" href="{% url 'vendor_order_detail' vendor_order.order_id %}">View order</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="vendor-empty"><strong>No orders yet</strong>Orders for your products will appear here.</div>
+                {% endif %}
+            </section>
+            <section id="shop-profile" class="vendor-card vendor-section" aria-labelledby="shop-profile-heading">
+                <h2 id="shop-profile-heading">Shop profile</h2>
+                <dl class="vendor-profile-grid">
+                    <div><dt>Vendor name</dt><dd>{{ vendor.name }}</dd></div>
+                    <div><dt>Shop name</dt><dd>{{ vendor.shop_name|default:"Not provided" }}</dd></div>
+                    <div><dt>Shop address</dt><dd>{{ vendor.shop_address|default:"Not provided" }}</dd></div>
+                    {% if vendor.business_registration %}<div><dt>Business registration</dt><dd>{{ vendor.business_registration }}</dd></div>{% endif %}
+                    {% if vendor.description %}<div><dt>Shop description</dt><dd>{{ vendor.description }}</dd></div>{% endif %}
+                    <div><dt>Email</dt><dd>{{ vendor.email|default:"Not provided" }}</dd></div>
+                    <div><dt>Phone</dt><dd>{{ vendor.phone|default:"Not provided" }}</dd></div>
+                </dl>
+            </section>
+        </div>
+        <section id="products" class="vendor-card vendor-section" aria-labelledby="products-heading">
+            <div class="vendor-section-heading">
+                <h2 id="products-heading">My Vegetables</h2>
+                <a class="vendor-action-link" href="{% url 'add_vegetable' %}">Add product</a>
+            </div>
+            {% if products %}
+                <div class="vendor-table-wrap">
+                    <table class="vendor-table">
+                        <thead><tr><th scope="col">Product</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Availability</th><th scope="col">Actions</th></tr></thead>
+                        <tbody>
+                            {% for product in products %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ product.name }}</strong>
+                                        {% if product.image %}<br><img class="vendor-product-image" src="{{ product.image.url }}" alt="{{ product.name }}">{% endif %}
+                                        <p class="vendor-product-meta">{{ product.description|default:"" }}</p>
+                                    </td>
+                                    <td>{{ product.category.name }}</td>
+                                    <td>₹{{ product.price|floatformat:2 }} / {{ product.units }}</td>
+                                    <td>{{ product.stock }} {{ product.units }}</td>
+                                    <td>
+                                        {% if product.stock <= 0 %}<span class="vendor-availability vendor-availability-out">Out of stock</span>
+                                        {% elif product.stock <= low_stock_threshold %}<span class="vendor-availability vendor-availability-low">Low stock</span>
+                                        {% else %}<span class="vendor-availability">Available</span>{% endif %}
+                                    </td>
+                                    <td>
+                                        <a class="vendor-action-link" href="{% url 'edit_vegetable' product.id %}">Edit</a>
+                                        <form class="vendor-stock-form" method="post" action="{% url 'update_vegetable_stock' product.id %}">
+                                            {% csrf_token %}<label for="stock-table-{{ product.id }}">Update stock</label>
+                                            <input id="stock-table-{{ product.id }}" type="number" name="stock" min="0" value="{{ product.stock }}" required>
+                                            <button type="submit">Save stock</button>
+                                        </form>
+                                        {% if product.has_orders %}<span class="vendor-product-meta">Cannot delete: in order history</span>
+                                        {% else %}<a class="vendor-action-link" href="{% url 'delete_vegetable' product.id %}">Delete</a>{% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <ul class="vendor-product-list">
+                    {% for product in products %}
+                        <li class="vendor-product-card">
+                            <div class="vendor-product-top">
+                                <div>
+                                    <p class="vendor-product-name">{{ product.name }}</p>
+                                    <p class="vendor-product-meta">{{ product.category.name }} · ₹{{ product.price|floatformat:2 }} / {{ product.units }}</p>
+                                </div>
+                                {% if product.image %}<img class="vendor-product-image" src="{{ product.image.url }}" alt="{{ product.name }}">{% endif %}
+                            </div>
+                            <p class="vendor-product-meta">Stock: {{ product.stock }} {{ product.units }}</p>
+                            {% if product.stock <= 0 %}<span class="vendor-availability vendor-availability-out">Out of stock</span>
+                            {% elif product.stock <= low_stock_threshold %}<span class="vendor-availability vendor-availability-low">Low stock</span>
+                            {% else %}<span class="vendor-availability">Available</span>{% endif %}
+                            <form class="vendor-stock-form" method="post" action="{% url 'update_vegetable_stock' product.id %}">
+                                {% csrf_token %}<label for="stock-mobile-{{ product.id }}">Update stock</label>
+                                <input id="stock-mobile-{{ product.id }}" type="number" name="stock" min="0" value="{{ product.stock }}" required>
+                                <button type="submit">Save stock</button>
+                            </form>
+                            <div class="vendor-product-actions">
+                                <a class="vendor-action-link" href="{% url 'edit_vegetable' product.id %}">Edit</a>
+                                {% if product.has_orders %}<span class="vendor-product-meta">Cannot delete: in order history</span>
+                                {% else %}<a class="vendor-action-link" href="{% url 'delete_vegetable' product.id %}">Delete</a>{% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="vendor-empty"><strong>No products yet</strong>You have not listed any vegetables yet. Your products will appear here after you add your first listing.<p><a class="vendor-primary-link" href="{% url 'add_vegetable' %}">Add product</a></p></div>
+            {% endif %}
+        </section>
+    </main>
+{% endblock %}

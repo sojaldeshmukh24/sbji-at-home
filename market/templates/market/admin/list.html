@@ -1,0 +1,51 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}{{ page_title }}{% endblock %}
+{% block admin_heading %}{{ page_title }}{% endblock %}
+{% block admin_description %}{{ page_description }}{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-label="{{ page_title }} records">
+        <form class="admin-filters" method="get">
+            <label class="admin-filter" for="admin-search">Search
+                <input id="admin-search" type="search" name="q" value="{{ query }}" placeholder="Search {{ page_title|lower }}">
+            </label>
+            {% for filter in filters %}
+                <label class="admin-filter" for="filter-{{ filter.name }}">{{ filter.label }}
+                    <select id="filter-{{ filter.name }}" name="{{ filter.name }}">
+                        {% for value, label in filter.options %}<option value="{{ value }}"{% if filter.value == value %} selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </label>
+            {% endfor %}
+            {% if request.resolver_match.url_name == 'market_admin_order_list' %}
+                <label class="admin-filter" for="date-from">From date<input id="date-from" type="date" name="date_from" value="{{ date_from }}"></label>
+                <label class="admin-filter" for="date-to">To date<input id="date-to" type="date" name="date_to" value="{{ date_to }}"></label>
+            {% endif %}
+            <button class="admin-button" type="submit">Apply filters</button>
+            <a class="admin-secondary-link" href="{{ request.path }}">Clear</a>
+            {% if page_title == 'Products' and perms.market.add_product %}<a class="admin-secondary-link" href="{% url 'admin:market_product_add' %}">Add product</a>{% endif %}
+            {% if page_title == 'Categories' and perms.market.add_category %}<a class="admin-secondary-link" href="{% url 'admin:market_category_add' %}">Add category</a>{% endif %}
+        </form>
+        <p class="admin-muted" aria-live="polite">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }} · page {{ page_obj.number }} of {{ page_obj.paginator.num_pages|default:1 }}</p>
+        {% if rows %}
+            <div class="admin-table-wrap"><table class="admin-table">
+                <thead><tr>{% for header in headers %}<th scope="col">{{ header }}</th>{% endfor %}{% if rows.0.action_url %}<th scope="col">Action</th>{% endif %}</tr></thead>
+                <tbody>{% for row in rows %}<tr>
+                    {% for column in row.columns %}<td data-label="{{ column.label }}">{% if forloop.first and row.detail_url %}<a href="{{ row.detail_url }}">{{ column.value }}</a>{% else %}{{ column.value }}{% endif %}{% if forloop.first and row.image_url %}<br><img src="{{ row.image_url }}" alt="{{ column.value }}" width="48" height="48" style="margin-top:.35rem;object-fit:cover;border-radius:5px">{% endif %}</td>{% endfor %}
+                    {% if row.action_url %}<td data-label="Action"><a href="{{ row.action_url }}">{{ row.action_label }}</a></td>{% elif rows.0.action_url %}<td data-label="Action"></td>{% endif %}
+                </tr>{% endfor %}</tbody>
+            </table></div>
+        {% else %}
+            <div class="admin-empty"><strong>{% if has_active_filters %}No matching results{% else %}No {{ page_title|lower }} found{% endif %}</strong>Try changing the search or filter values.</div>
+        {% endif %}
+        {% if page_obj.paginator.num_pages > 1 %}
+            <nav class="admin-pagination" aria-label="Pagination">
+                <p>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+                <div class="admin-actions">
+                    {% if previous_page_url %}<a class="admin-secondary-link" href="{{ previous_page_url }}">Previous</a>{% endif %}
+                    {% if next_page_url %}<a class="admin-secondary-link" href="{{ next_page_url }}">Next</a>{% endif %}
+                </div>
+            </nav>
+        {% endif %}
+    </section>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends "market/base.html" %}
+
+{% block title %}{{ product.name }} | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .product-detail-page { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .product-detail-card { display: grid; gap: 1.25rem; padding: 1rem; border: 1px solid #e2eae4; border-radius: 18px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .product-detail-media { min-width: 0; margin: 0; }
+        .product-detail-media img, .product-detail-image { display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 13px; background: #f2f6f2; object-fit: cover; }
+        .product-detail-image-placeholder { display: grid; place-items: center; color: #617269; font-size: .9rem; }
+        .product-detail-copy { min-width: 0; }
+        .product-detail-copy h1 { margin: 0 0 .7rem; font-size: clamp(1.65rem, 5vw, 2.2rem); line-height: 1.15; overflow-wrap: anywhere; }
+        .product-detail-description { color: #435149; line-height: 1.6; overflow-wrap: anywhere; }
+        .product-detail-price { margin: 1rem 0 .35rem; color: #105236; font-size: 1.55rem; font-weight: 850; }
+        .product-detail-meta { margin: .45rem 0; color: #526158; overflow-wrap: anywhere; }
+        .product-detail-stock { display: inline-flex; min-height: 32px; align-items: center; margin-top: .45rem; padding: .35rem .6rem; border-radius: 999px; background: #e8f4e9; color: #155d3c; font-size: .85rem; font-weight: 750; }
+        .product-detail-stock-out { background: #fff0ed; color: #922f25; }
+        .product-detail-actions { display: grid; gap: .65rem; margin-top: 1rem; }
+        .product-detail-cart { display: flex; flex-wrap: wrap; align-items: end; gap: .55rem; }
+        .product-detail-cart label { display: grid; flex: 1 1 100%; gap: .3rem; color: #435149; font-size: .88rem; font-weight: 700; }
+        .product-detail-cart input { width: 100%; min-height: 44px; padding: .6rem .7rem; border: 1px solid #cbd5ce; border-radius: 10px; color: #183329; }
+        .product-detail-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; padding: .7rem .9rem; border: 1px solid #176b45; border-radius: 10px; background: #176b45; color: #fff; font: inherit; font-weight: 750; text-decoration: none; cursor: pointer; }
+        .product-detail-button-secondary { border-color: #cbd5ce; background: #fff; color: #183329; }
+        .product-detail-page button:focus-visible, .product-detail-page input:focus-visible, .product-detail-page a:focus-visible { outline: 3px solid #d18a00; outline-offset: 3px; }
+        .product-detail-back { display: inline-flex; min-height: 44px; align-items: center; margin-top: .9rem; color: #105236; font-weight: 700; }
+        .recommendations { margin: 2rem 0 0; color: #183329; }
+        .recommendations h2 { margin: 0 0 .35rem; font-size: 1.35rem; }
+        .recommendations-intro { margin: 0 0 .75rem; color: #617269; }
+        .recommendation-list { display: grid; grid-auto-columns: minmax(215px, 78%); grid-auto-flow: column; gap: .8rem; overflow-x: auto; margin: 0; padding: .25rem .1rem .8rem; list-style: none; scroll-snap-type: x mandatory; }
+        .recommendation-card { min-width: 0; overflow: hidden; border: 1px solid #e2eae4; border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); scroll-snap-align: start; }
+        .recommendation-image { display: block; width: 100%; height: 135px; object-fit: cover; background: #f2f6f2; }
+        .recommendation-placeholder { display: grid; place-items: center; color: #617269; font-size: .85rem; }
+        .recommendation-content { padding: .8rem; }
+        .recommendation-name { color: #183329; font-weight: 700; text-decoration: none; }
+        .recommendation-vendor { min-height: 2.3em; margin: .3rem 0; color: #617269; font-size: .82rem; overflow-wrap: anywhere; }
+        .recommendation-price { margin: .45rem 0; color: #105236; font-weight: 700; }
+        .recommendation-stock { margin: .35rem 0; color: #617269; font-size: .82rem; }
+        .recommendation-unavailable { display: inline-block; padding: .3rem .5rem; border-radius: 8px; background: #fff0ed; color: #922f25; font-size: .8rem; font-weight: 700; }
+        .recommendation-add { width: 100%; min-height: 42px; margin-top: .3rem; border: 0; border-radius: 10px; background: #176b45; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+        @media (min-width: 700px) {
+            .product-detail-page { padding-top: 2rem; }
+            .product-detail-card { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: center; gap: 2rem; padding: 1.5rem; }
+            .product-detail-actions { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
+            .product-detail-cart { align-items: end; }
+            .product-detail-cart label { flex-basis: 7rem; }
+            .recommendation-list { grid-auto-columns: minmax(220px, 1fr); }
+            .recommendation-image { height: 150px; }
+        }
+    </style>
+    <main class="product-detail-page">
+        <article class="product-detail-card">
+            <figure class="product-detail-media">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                    <div class="product-detail-image product-detail-image-placeholder" aria-hidden="true">No image available</div>
+                {% endif %}
+            </figure>
+            <div class="product-detail-copy">
+                <h1>{{ product.name }}</h1>
+                {% if product.description %}
+                    <p class="product-detail-description">{{ product.description }}</p>
+                {% endif %}
+                <p class="product-detail-price">₹{{ product.price }} <span>/ {{ product.units }}</span></p>
+                <p class="product-detail-meta"><strong>Stock:</strong> {{ product.stock }} {{ product.units }}</p>
+                <p class="product-detail-meta"><strong>Category:</strong> {{ product.category.name }}</p>
+                {% if product.vendor %}
+                    <p class="product-detail-meta"><strong>Vendor:</strong> {{ product.vendor.name }}{% if product.vendor.shop_name %} — {{ product.vendor.shop_name }}{% endif %}</p>
+                {% else %}
+                    <p class="product-detail-meta"><strong>Vendor:</strong> Vendor details are not available.</p>
+                {% endif %}
+                {% if product.stock > 0 %}
+                    <span class="product-detail-stock">Available: {{ product.stock }} {{ product.units }}</span>
+                    <div class="product-detail-actions">
+                        <form class="product-detail-cart" method="post" action="{% url 'add_to_cart' product.id %}">
+                            {% csrf_token %}
+                            <label for="quantity">Quantity
+                                <input id="quantity" type="number" name="quantity" min="1" max="{{ product.stock }}" value="1" required>
+                            </label>
+                            <button class="product-detail-button" type="submit" data-loading-text="Adding to cart…">Add to cart</button>
+                        </form>
+                        {% if user.is_authenticated and user.customer %}
+                            <form method="post" action="{% url 'add_to_wishlist' product.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button class="product-detail-button product-detail-button-secondary" type="submit" data-loading-text="Saving…">♡ Save to wishlist</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="product-detail-stock product-detail-stock-out" role="status">Out of stock</p>
+                {% endif %}
+                <a class="product-detail-back" href="{% url 'product_list' %}">← Back to products</a>
+            </div>
+        </article>
+        {% if recommendations %}
+            <section class="recommendations" aria-labelledby="recommendations-heading">
+                <h2 id="recommendations-heading">You may also like</h2>
+                <p class="recommendations-intro">More listings from {{ product.category.name }}.</p>
+                <div class="recommendation-list">
+                    {% for recommended_product in recommendations %}
+                        <article class="recommendation-card">
+                            {% if recommended_product.image %}
+                                <img class="recommendation-image" src="{{ recommended_product.image.url }}" alt="{{ recommended_product.name }}">
+                            {% else %}
+                                <div class="recommendation-image recommendation-placeholder" aria-hidden="true">No image</div>
+                            {% endif %}
+                            <div class="recommendation-content">
+                                <a class="recommendation-name" href="{% url 'product_detail' recommended_product.id %}">{{ recommended_product.name }}</a>
+                                {% if recommended_product.vendor %}
+                                    <p class="recommendation-vendor">{{ recommended_product.vendor.name }}{% if recommended_product.vendor.shop_name %} · {{ recommended_product.vendor.shop_name }}{% endif %}</p>
+                                {% else %}
+                                    <p class="recommendation-vendor">Vendor details are not available.</p>
+                                {% endif %}
+                                <p class="recommendation-price">₹{{ recommended_product.price }} / {{ recommended_product.units }}</p>
+                                {% if recommended_product.stock > 0 %}
+                                    <p class="recommendation-stock">{{ recommended_product.stock }} available</p>
+                                    <form method="post" action="{% url 'add_to_cart' recommended_product.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button class="recommendation-add" type="submit" data-loading-text="Adding to cart…">Add to cart</button>
+                                    </form>
+                                {% else %}
+                                    <span class="recommendation-unavailable">Out of stock</span>
+                                {% endif %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

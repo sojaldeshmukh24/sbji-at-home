@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+/about.txt
+db.sqlite3
+db.sqlite3-*
+
+/media/
+/staticfiles/
+
+/.venv/
+/.venv-*/
+/venv/
+
+__pycache__/
+*.py[cod]
