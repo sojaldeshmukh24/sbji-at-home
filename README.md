@@ -31,6 +31,7 @@ used by an internet-accessible deployment, replace it in the deployment's
 secret store and invalidate sessions signed with it. Never put these values in
 source control, templates, command history, or logs.
 
+
 ### HTTPS and trusted proxy configuration
 
 Production session and CSRF cookies are secure-only whenever `DJANGO_DEBUG` is
@@ -90,7 +91,7 @@ code version and, if necessary, the matching database and media backups. No
 automated production backup, restore, deployment, or rollback is configured by
 this repository.
 
-### Monitoring and operational checks
+### Monitoring and operational checks 
 
 No hosting platform, health endpoint, monitoring service, alert routing, or
 production log destination is configured here. Before launch, choose how to
