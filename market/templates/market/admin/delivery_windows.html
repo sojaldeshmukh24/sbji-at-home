@@ -1,0 +1,44 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}Delivery windows{% endblock %}
+{% block admin_heading %}Delivery windows{% endblock %}
+{% block admin_description %}Time slots customers can choose at checkout. Turn a window off instead of deleting it.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-label="Delivery windows">
+        {% if not active_count %}
+            <div class="admin-empty" role="alert">
+                <strong>No active delivery windows</strong>
+                Customers cannot place orders until at least one window is active.
+            </div>
+        {% endif %}
+        <div class="admin-actions" style="margin:.75rem 0;">
+            {% if can_add %}<a class="admin-button" href="{% url 'market_admin_delivery_window_add' %}">Add delivery window</a>{% endif %}
+        </div>
+        <p class="admin-muted" aria-live="polite">{{ windows|length }} window{{ windows|length|pluralize }} · {{ active_count }} active</p>
+        {% if windows %}
+            <div class="admin-table-wrap"><table class="admin-table">
+                <thead><tr>
+                    <th scope="col">Name</th><th scope="col">Time</th><th scope="col">Capacity</th><th scope="col">Status</th>{% if can_change %}<th scope="col">Action</th>{% endif %}
+                </tr></thead>
+                <tbody>{% for window in windows %}<tr>
+                    <td data-label="Name">{% if can_change %}<a href="{% url 'market_admin_delivery_window_edit' window.id %}">{{ window.name }}</a>{% else %}{{ window.name }}{% endif %}</td>
+                    <td data-label="Time">{{ window.start_time|time:"g:i A" }} – {{ window.end_time|time:"g:i A" }}</td>
+                    <td data-label="Capacity">{{ window.capacity }} orders</td>
+                    <td data-label="Status">{% if window.is_active %}<span class="bk-chip bk-chip--active">Active</span>{% else %}<span class="bk-chip bk-chip--inactive">Inactive</span>{% endif %}</td>
+                    {% if can_change %}<td data-label="Action">
+                        <div class="admin-actions">
+                            <a class="admin-secondary-link" href="{% url 'market_admin_delivery_window_edit' window.id %}">Edit</a>
+                            <form method="post" action="{% url 'market_admin_delivery_window_toggle' window.id %}">
+                                {% csrf_token %}
+                                <button class="{% if window.is_active %}admin-secondary-link{% else %}admin-button{% endif %}" type="submit">{% if window.is_active %}Turn off{% else %}Turn on{% endif %}</button>
+                            </form>
+                        </div>
+                    </td>{% endif %}
+                </tr>{% endfor %}</tbody>
+            </table></div>
+        {% else %}
+            <div class="admin-empty"><strong>No delivery windows yet</strong>Add your first window, for example Morning 8:00 AM – 10:00 AM.</div>
+        {% endif %}
+    </section>
+{% endblock %}

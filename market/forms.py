@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .models import Customer, DeliveryAddress, Product, Review, Vendor
+from .models import Customer, DeliveryAddress, DeliveryWindow, Product, Review, Vendor
 
 
 class VendorSearchForm(forms.Form):
@@ -191,3 +191,31 @@ class ReviewForm(forms.ModelForm):
         widgets = {
             'comment': forms.Textarea(attrs={'rows': 4, 'maxlength': 500}),
         }
+
+
+class DeliveryWindowForm(forms.ModelForm):
+    capacity = forms.IntegerField(
+        min_value=1,
+        label='Capacity (orders per slot)',
+        help_text='How many orders this window can take on one day.',
+    )
+
+    class Meta:
+        model = DeliveryWindow
+        fields = ('name', 'start_time', 'end_time', 'capacity', 'is_active')
+        labels = {'is_active': 'Active (customers can choose it)'}
+        widgets = {
+            'start_time': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(format='%H:%M', attrs={'type': 'time'}),
+        }
+
+    def clean_name(self):
+        return self.cleaned_data['name'].strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get('start_time')
+        end = cleaned.get('end_time')
+        if start and end and end <= start:
+            self.add_error('end_time', 'End time must be after the start time.')
+        return cleaned

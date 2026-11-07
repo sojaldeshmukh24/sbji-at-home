@@ -1,0 +1,26 @@
+{% extends "market/admin/base.html" %}
+
+{% block admin_title %}{% if window %}Edit{% else %}Add{% endif %} delivery window{% endblock %}
+{% block admin_heading %}{% if window %}Edit delivery window{% else %}Add delivery window{% endif %}{% endblock %}
+{% block admin_description %}Example: Morning, 8:00 AM to 10:00 AM, capacity 20.{% endblock %}
+
+{% block admin_content %}
+    <section class="admin-panel" aria-label="Delivery window form">
+        <form method="post" style="display:grid;gap:.9rem;max-width:460px;">
+            {% csrf_token %}
+            {% for error in form.non_field_errors %}<p role="alert" style="color:#8a1f1f;margin:0;">{{ error }}</p>{% endfor %}
+            {% for field in form %}
+                <div class="admin-filter">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<span class="admin-muted" style="font-weight:400;">{{ field.help_text }}</span>{% endif %}
+                    {% for error in field.errors %}<span role="alert" style="color:#8a1f1f;font-weight:600;">{{ error }}</span>{% endfor %}
+                </div>
+            {% endfor %}
+            <div class="admin-actions">
+                <button class="admin-button" type="submit">{% if window %}Save changes{% else %}Add window{% endif %}</button>
+                <a class="admin-secondary-link" href="{% url 'market_admin_delivery_window_list' %}">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -37,8 +37,8 @@
                     <td data-label="Date">{{ order.order_date|date:"j M Y, g:i A" }}</td>
                     <td data-label="Items">{{ order.admin_item_count }}</td>
                     <td data-label="Total">₹{{ order.admin_order_total|floatformat:2 }}</td>
-                    <td data-label="Payment">{{ order.get_payment_status_display }}</td>
-                    <td data-label="Status">{{ order.get_status_display|default:"Unspecified" }}</td>
+                    <td data-label="Payment"><span class="bk-chip bk-chip--{{ order.payment_status }}">{{ order.get_payment_status_display }}</span></td>
+                    <td data-label="Status"><span class="bk-chip bk-chip--{{ order.status }}">{{ order.get_status_display|default:"Unspecified" }}</span></td>
                     <td data-label="Details"><a href="{% url 'market_admin_order_detail' order.id %}">View order</a></td>
                 </tr>{% endfor %}</tbody>
             </table></div>

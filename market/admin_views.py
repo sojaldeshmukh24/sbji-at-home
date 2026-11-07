@@ -3,16 +3,21 @@ from functools import wraps
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_http_methods, require_POST
+
+from .forms import DeliveryWindowForm
 
 from .models import (
 	Category,
 	Customer,
+	DeliveryWindow,
 	Order,
 	OrderItem,
 	OrderStatusHistory,
@@ -530,3 +535,49 @@ def order_detail(request, order_id):
 			order=order,
 		).select_related('actor', 'vendor_order__vendor'),
 	})
+
+
+@marketplace_permissions_required('market.view_deliverywindow')
+def delivery_window_list(request):
+	windows = list(DeliveryWindow.objects.all())
+	return render(request, 'market/admin/delivery_windows.html', {
+		'windows': windows,
+		'active_count': sum(1 for window in windows if window.is_active),
+		'can_add': request.user.has_perm('market.add_deliverywindow'),
+		'can_change': request.user.has_perm('market.change_deliverywindow'),
+	})
+
+
+@marketplace_permissions_required('market.view_deliverywindow')
+@require_http_methods(['GET', 'POST'])
+def delivery_window_form(request, window_id=None):
+	window = get_object_or_404(DeliveryWindow, id=window_id) if window_id else None
+	needed = 'market.change_deliverywindow' if window else 'market.add_deliverywindow'
+	if not request.user.has_perm(needed):
+		raise PermissionDenied
+	form = DeliveryWindowForm(request.POST or None, instance=window)
+	if request.method == 'POST' and form.is_valid():
+		saved = form.save()
+		messages.success(
+			request,
+			f'Delivery window "{saved.name}" was '
+			f'{"updated" if window else "added"}.',
+		)
+		return redirect('market_admin_delivery_window_list')
+	return render(request, 'market/admin/delivery_window_form.html', {
+		'form': form,
+		'window': window,
+	})
+
+
+@marketplace_permissions_required('market.change_deliverywindow')
+@require_POST
+def delivery_window_toggle(request, window_id):
+	window = get_object_or_404(DeliveryWindow, id=window_id)
+	window.is_active = not window.is_active
+	window.save(update_fields=['is_active'])
+	messages.success(
+		request,
+		f'"{window.name}" is now {"active" if window.is_active else "inactive"}.',
+	)
+	return redirect('market_admin_delivery_window_list')
