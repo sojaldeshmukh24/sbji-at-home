@@ -346,6 +346,9 @@ class CartAndCheckoutTests(TestCase):
         self.assertNotIn('cart', self.client.session)
 
     def test_guest_cart_persists_across_product_and_cart_navigation(self):
+        vendor = Vendor.objects.create(name='Test Vendor')
+        Product.objects.filter(id=self.product.id).update(vendor=vendor)
+
         self.client.post(
             reverse('add_to_cart', args=[self.product.id]),
             {'quantity': '2'},
