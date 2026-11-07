@@ -1,0 +1,40 @@
+{% load static %}
+{% comment %}
+  Location picker. Include with:
+    {% include "market/partials/location_picker.html" with save_url=... heading=... %}
+  Without save_url it fills the latitude/longitude fields of the enclosing form.
+{% endcomment %}
+<style>
+    .location-picker { display: grid; gap: .6rem; padding: 1rem; border: 1px solid #cfe3d6; border-radius: 14px; background: #f3faf5; color: #183329; }
+    .location-picker h3 { margin: 0; font-size: .98rem; }
+    .location-picker p { margin: 0; color: #52665a; font-size: .86rem; line-height: 1.5; }
+    .location-picker-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .location-picker button { min-height: 44px; padding: .55rem .9rem; border: 1px solid #176b45; border-radius: 10px; background: #176b45; color: #fff; font-weight: 750; cursor: pointer; }
+    .location-picker button:hover { background: #105236; }
+    .location-picker button[disabled] { opacity: .6; cursor: wait; }
+    .location-picker button.location-picker-secondary { background: #fff; color: #176b45; }
+    .location-picker details { font-size: .84rem; color: #52665a; }
+    .location-picker summary { cursor: pointer; font-weight: 700; color: #176b45; min-height: 32px; display: flex; align-items: center; }
+    .location-picker input[type="text"] { flex: 1 1 200px; min-height: 44px; padding: .55rem .7rem; border: 1px solid #cbd5ce; border-radius: 10px; background: #fff; }
+    .location-picker [data-location-status] { min-height: 1.2em; font-weight: 650; }
+    .location-picker [data-state="ok"] { color: #176b45; }
+    .location-picker [data-state="error"] { color: #922f25; }
+</style>
+<div class="location-picker" data-location-picker{% if save_url %} data-save-url="{{ save_url }}"{% endif %}>
+    {% if save_url %}{% csrf_token %}{% endif %}
+    <h3>{{ heading|default:"Use your current location" }}</h3>
+    {% if help_text %}<p>{{ help_text }}</p>{% endif %}
+    <div class="location-picker-row">
+        <button type="button" data-location-button>{{ button_label|default:"Use my current location" }}</button>
+    </div>
+    <details>
+        <summary>Location not working? Enter it manually</summary>
+        <p>Open Google Maps, press and hold your spot, then copy the two numbers shown at the top.</p>
+        <div class="location-picker-row">
+            <input type="text" inputmode="decimal" placeholder="22.7196, 75.8577" aria-label="Latitude and longitude" data-location-manual>
+            <button type="button" class="location-picker-secondary" data-location-manual-button>Use these</button>
+        </div>
+    </details>
+    <p role="status" aria-live="polite" data-location-status>{{ status_text }}</p>
+</div>
+<script src="{% static 'market/location.js' %}" defer></script>

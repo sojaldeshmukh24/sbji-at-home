@@ -1,0 +1,56 @@
+{% extends "market/base.html" %}
+
+{% block title %}{{ vendor.shop_name|default:vendor.name }} | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .shop-page { max-width: 1200px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .shop-back { display: inline-block; margin-bottom: .6rem; color: #176b45; font-weight: 700; text-decoration: none; }
+        .shop-back:hover { text-decoration: underline; }
+        .shop-hero { display: grid; gap: .5rem; margin-bottom: 1.2rem; padding: 1.2rem; border: 1px solid #e2eae4; border-radius: 18px; background: linear-gradient(145deg, #e8f4e9, #f6f7df 80%); }
+        .shop-hero h1 { margin: 0; font-size: clamp(1.6rem, 4.5vw, 2.2rem); letter-spacing: -.03em; }
+        .shop-hero p { margin: 0; color: #52665a; line-height: 1.55; }
+        .shop-hero-badges { display: flex; flex-wrap: wrap; gap: .45rem; }
+        .shop-badge { display: inline-flex; padding: .3rem .65rem; border-radius: 999px; background: rgb(255 255 255 / 80%); color: #155b3e; font-size: .84rem; font-weight: 800; }
+        .shop-badge-far { background: #fff4dc; color: #7a5300; }
+        .shop-section-title { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; margin: 1.2rem 0 .7rem; }
+        .shop-section-title h2 { margin: 0; font-size: 1.15rem; }
+        .shop-section-title span { color: #617269; font-size: .85rem; }
+        .shop-product-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 0; padding: 0; list-style: none; }
+        .shop-product-grid > li { min-width: 0; }
+        .shop-empty { padding: 1.5rem; border: 1px dashed #cbd5ce; border-radius: 14px; background: #fff; color: #617269; }
+        @media (min-width: 560px) { .shop-product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; } }
+        @media (min-width: 900px) { .shop-product-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; } .shop-product-grid .product-card-image { height: 205px; } }
+    </style>
+    <main class="shop-page">
+        <a class="shop-back" href="{% url 'nearby_shops' %}">← All nearby shops</a>
+        <header class="shop-hero">
+            <h1>{{ vendor.shop_name|default:vendor.name }}</h1>
+            {% if vendor.shop_name %}<p>Run by {{ vendor.name }}</p>{% endif %}
+            {% if vendor.description %}<p>{{ vendor.description }}</p>{% endif %}
+            {% if vendor.shop_address %}<p>📍 {{ vendor.shop_address }}</p>{% endif %}
+            <div class="shop-hero-badges">
+                {% if distance_label %}
+                    <span class="shop-badge{% if far_away %} shop-badge-far{% endif %}">{{ distance_label }} from you</span>
+                {% endif %}
+                {% if far_away %}
+                    <span class="shop-badge shop-badge-far">Far away: delivery may take longer</span>
+                {% endif %}
+            </div>
+        </header>
+
+        <div class="shop-section-title">
+            <h2>Fresh from this shop</h2>
+            <span>{{ products|length }} listing{{ products|length|pluralize }}</span>
+        </div>
+        <ul class="shop-product-grid">
+            {% for product in products %}
+                <li>
+                    {% include "market/partials/product_card.html" with product=product wishlist_product_ids=wishlist_product_ids wishlist_next=request.get_full_path card_key="shop" %}
+                </li>
+            {% empty %}
+                <li class="shop-empty">This shop has not listed any products yet.</li>
+            {% endfor %}
+        </ul>
+    </main>
+{% endblock %}

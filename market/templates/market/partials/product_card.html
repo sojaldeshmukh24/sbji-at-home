@@ -39,6 +39,7 @@
                 Local vendor
             {% endif %}
         </p>
+        {% if product.vendor %}<p class="product-card-vendor"><a href="{% url 'shop_detail' product.vendor.id %}">Visit this shop</a></p>{% endif %}
         <p class="product-card-price">₹{{ product.price }} <span>/ {{ product.units }}</span></p>
         {% if product.stock > 0 %}
             {% if product.stock <= 3 %}

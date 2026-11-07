@@ -40,6 +40,9 @@
         .vendor-cart-heading h2 { margin: 0; font-size: 1.05rem; }
         .vendor-cart-heading p { margin: .2rem 0 0; color: var(--cart-muted); font-size: .88rem; }
         .vendor-subtotal { text-align: right; white-space: nowrap; }
+        .vendor-cart-heading .vendor-distance { color: #155b3e; font-weight: 700; }
+        .vendor-cart-heading .vendor-distance-far { color: #7a5300; }
+        .vendor-cart-heading .vendor-distance a { color: #176b45; }
         .vendor-cart-items { margin: 0; padding: 0; list-style: none; }
         .cart-product {
             display: grid;
@@ -225,6 +228,13 @@
                         <div>
                             <h2 id="vendor-cart-heading-{{ forloop.counter }}">{{ group.vendor_name }}</h2>
                             {% if group.shop_name %}<p>{{ group.shop_name }}</p>{% endif %}
+                            {% if group.vendor %}
+                                {% if group.distance_label %}
+                                    <p class="vendor-distance{% if group.far_away %} vendor-distance-far{% endif %}">📍 {{ group.distance_label }} away{% if group.far_away %} · Far away, delivery may take longer{% endif %} · <a href="{% url 'shop_detail' group.vendor.id %}">Visit shop</a></p>
+                                {% else %}
+                                    <p class="vendor-distance"><a href="{% url 'shop_detail' group.vendor.id %}">Visit shop</a>{% if not has_location %} · <a href="{% url 'nearby_shops' %}">Set your location</a> to see distance{% endif %}</p>
+                                {% endif %}
+                            {% endif %}
                         </div>
                         <p class="vendor-subtotal"><strong>Subtotal</strong><br>{{ group.subtotal }}</p>
                     </header>

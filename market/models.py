@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 import uuid
 # Create your models here.
@@ -28,6 +28,20 @@ class Vendor(models.Model):
         blank=True,
         related_name='vendor_profile',
     )
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+    )
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+    )
+
+    @property
+    def has_location(self):
+        return self.latitude is not None and self.longitude is not None
 
     def __str__(self):
         return self.name
@@ -54,6 +68,20 @@ class Customer(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE)
     address=models.CharField(max_length=200)
     phone=models.CharField(max_length=20)
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+    )
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+    )
+
+    @property
+    def has_location(self):
+        return self.latitude is not None and self.longitude is not None
 
     def __str__(self):
         return self.user.username
@@ -74,6 +102,16 @@ class DeliveryAddress(models.Model):
     postal_code = models.CharField(max_length=20)
     phone = models.CharField(max_length=20)
     is_default = models.BooleanField(default=False)
+    latitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
+    )
+    longitude = models.FloatField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
+    )
 
     class Meta:
         constraints = [

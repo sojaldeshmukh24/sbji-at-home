@@ -1,0 +1,44 @@
+/* SBJI@Home shared mobile layer. Loaded by the customer/vendor and admin bases. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { overflow-wrap: break-word; padding-bottom: env(safe-area-inset-bottom, 0px); }
+img, video, svg, iframe { max-width: 100%; }
+
+/* Show / hide password */
+.password-field { position: relative; display: block; width: 100%; }
+.password-field > input { width: 100%; padding-right: 4.6rem; }
+.password-toggle {
+  position: absolute; top: 50%; right: .35rem; transform: translateY(-50%);
+  min-height: 36px; min-width: 56px; padding: .2rem .6rem;
+  border: 0; border-radius: 8px; background: #e8f5ee; color: #155b3e;
+  font-size: .82rem; font-weight: 800; cursor: pointer;
+}
+.password-toggle:hover { background: #d5ecdf; }
+
+/* Wide tables scroll inside their own box */
+.table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-scroll:focus-visible { outline: 3px solid #d18a00; outline-offset: 2px; }
+.table-scroll > table { min-width: 560px; }
+
+@media (max-width: 760px) {
+  /* 16px stops iOS Safari zooming into a field when it is focused */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select, textarea { font-size: 16px; min-height: 44px; max-width: 100%; }
+  /* comfortable thumb targets */
+  button, input[type="submit"], input[type="button"], .button, [role="button"] { min-height: 44px; }
+  input[type="checkbox"], input[type="radio"] { width: 20px; height: 20px; }
+  /* long emails, shop names and addresses wrap instead of overflowing */
+  h1, h2, h3, p, dd, li, td, th, a { overflow-wrap: anywhere; }
+  pre, code { white-space: pre-wrap; }
+}
+
+/* Very small phones: stack two-column info grids */
+@media (max-width: 380px) {
+  .order-info-grid, .order-meta, .vendor-order-meta, .vendor-profile-grid,
+  .admin-definition-list, .registration-switcher { grid-template-columns: minmax(0, 1fr) !important; }
+  .vendor-stats, .admin-stats { grid-template-columns: minmax(0, 1fr) !important; }
+  .site-delivery { min-width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

@@ -1,8 +1,9 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% block title %}SBJI@Home{% endblock %}</title>
     <style>
         :root { color-scheme: light; --site-ink: #14291e; --site-green: #176143; --site-muted: #718078; --site-line: #e5eee8; --site-mint: #eff7f2; --site-deep: #0d3323; }
@@ -139,6 +140,7 @@
             .home-layout .site-nav { grid-column: 3; grid-row: 1 / 3; justify-self: end; }
         }
     </style>
+    <link rel="stylesheet" href="{% static 'market/mobile.css' %}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
     {% if not user.vendor_profile and request.path|slice:":9" != "/vendors/" or not user.vendor_profile and request.path == "/vendors/" %}
@@ -199,6 +201,7 @@
                 {% if not user.is_authenticated or not user.vendor_profile %}
                 {% if request.path != "/" %}
                 <a href="{% url 'product_list' %}">Shop</a>
+                <a href="{% url 'nearby_shops' %}">Nearby shops</a>
                 <a href="{% url 'vendor_search' %}">Local shops</a>
                 {% endif %}
                 {% if user.is_authenticated and user.customer %}
@@ -326,5 +329,7 @@
                 : `${originalText || 'Request'} is being processed. Please wait.`;
         });
     </script>
+    <script src="{% static 'market/password-toggle.js' %}" defer></script>
+    <script src="{% static 'market/responsive.js' %}" defer></script>
 </body>
 </html>

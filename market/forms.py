@@ -46,6 +46,18 @@ class VendorRegistrationForm(forms.Form):
         widget=forms.Textarea(attrs={'rows': 4}),
     )
     phone = forms.CharField(max_length=20)
+    latitude = forms.FloatField(
+        required=False,
+        min_value=-90,
+        max_value=90,
+        widget=forms.HiddenInput,
+    )
+    longitude = forms.FloatField(
+        required=False,
+        min_value=-180,
+        max_value=180,
+        widget=forms.HiddenInput,
+    )
     password = forms.CharField(widget=forms.PasswordInput)
     password_confirm = forms.CharField(
         label='Confirm password',
@@ -70,6 +82,12 @@ class VendorRegistrationForm(forms.Form):
         password_confirm = cleaned_data.get('password_confirm')
         if password and password_confirm and password != password_confirm:
             self.add_error('password_confirm', 'Passwords do not match.')
+
+        if (cleaned_data.get('latitude') is None) != (
+            cleaned_data.get('longitude') is None
+        ):
+            cleaned_data['latitude'] = None
+            cleaned_data['longitude'] = None
 
         if password and cleaned_data.get('username'):
             candidate_user = User(
@@ -143,4 +161,10 @@ class DeliveryAddressForm(forms.ModelForm):
             'state',
             'postal_code',
             'phone',
+            'latitude',
+            'longitude',
         )
+        widgets = {
+            'latitude': forms.HiddenInput,
+            'longitude': forms.HiddenInput,
+        }

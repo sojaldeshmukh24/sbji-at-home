@@ -108,6 +108,15 @@
                         <button type="submit">Save profile</button>
                     </form>
                 </section>
+                <section class="account-card" aria-labelledby="location-heading">
+                    <h2 id="location-heading">My location</h2>
+                    {% url 'save_location' as save_location_url %}
+                    {% if customer.has_location %}
+                        {% include "market/partials/location_picker.html" with save_url=save_location_url heading="Location saved" button_label="Update my location" help_text="We use it to show the shops closest to you." %}
+                    {% else %}
+                        {% include "market/partials/location_picker.html" with save_url=save_location_url heading="Add your location" help_text="We use it to show the shops closest to you." %}
+                    {% endif %}
+                </section>
                 <section class="account-card" aria-labelledby="addresses-heading">
                     <h2 id="addresses-heading">Saved delivery addresses</h2>
                     {% if addresses %}

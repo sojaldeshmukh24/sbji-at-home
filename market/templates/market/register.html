@@ -84,6 +84,11 @@
                         <label for="phone">Phone</label>
                         <input type="tel" id="phone" name="phone" autocomplete="tel" required>
                     </p>
+                    <div style="grid-column: 1 / -1;">
+                        <input type="hidden" name="latitude">
+                        <input type="hidden" name="longitude">
+                        {% include "market/partials/location_picker.html" with heading="Your delivery location" help_text="Optional, but it lets us show shops closest to you." %}
+                    </div>
                     <button type="submit">Create account</button>
                 </form>
                 <p class="customer-register-links">

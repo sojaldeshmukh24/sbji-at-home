@@ -59,6 +59,9 @@
                 <form class="vendor-auth-card" method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
+                    <div style="grid-column: 1 / -1;">
+                        {% include "market/partials/location_picker.html" with heading="Your shop location" button_label="Use my shop's current location" help_text="Stand at your shop and tap the button so nearby customers can find you. You can also set it later from your dashboard." %}
+                    </div>
                     <button type="submit">Create vendor account</button>
                 </form>
                 <p class="vendor-auth-links">Already registered? <a href="{% url 'login' %}">Log in</a></p>

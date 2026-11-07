@@ -67,6 +67,7 @@
                 <p class="product-detail-meta"><strong>Category:</strong> {{ product.category.name }}</p>
                 {% if product.vendor %}
                     <p class="product-detail-meta"><strong>Vendor:</strong> {{ product.vendor.name }}{% if product.vendor.shop_name %} — {{ product.vendor.shop_name }}{% endif %}</p>
+                    <p class="product-detail-meta"><a href="{% url 'shop_detail' product.vendor.id %}">Visit this shop</a></p>
                 {% else %}
                     <p class="product-detail-meta"><strong>Vendor:</strong> Vendor details are not available.</p>
                 {% endif %}

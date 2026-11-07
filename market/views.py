@@ -36,6 +36,13 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from .geo import (
+	DELIVERY_RADIUS_KM,
+	distance_to_vendor,
+	format_distance,
+	is_far_away,
+	parse_coordinates,
+)
 from .forms import (
 	CustomerProfileForm,
 	CustomerUserProfileForm,
@@ -426,6 +433,8 @@ def vendor_register(request):
 				description=form.cleaned_data['description'],
 				email=form.cleaned_data['email'],
 				phone=form.cleaned_data['phone'],
+				latitude=form.cleaned_data.get('latitude'),
+				longitude=form.cleaned_data.get('longitude'),
 			)
 		login(request, user)
 		return redirect('vendor_dashboard')
@@ -1308,6 +1317,14 @@ def add_to_cart(request, product_id):
 
 def cart_view(request):
 	context = _cart_context(request)
+	location = _current_location(request)
+	for group in context['vendor_groups']:
+		distance = distance_to_vendor(location, group['vendor'])
+		group['distance_km'] = distance
+		group['distance_label'] = format_distance(distance)
+		group['far_away'] = is_far_away(distance)
+	context['delivery_radius_km'] = DELIVERY_RADIUS_KM
+	context['has_location'] = location is not None
 	return render(request, 'market/cart.html', context)
 
 @require_POST
@@ -2228,8 +2245,18 @@ def register(request):
 		except ValidationError as error:
 			return render(request, 'market/register.html', {'error': error.messages})
 
+		coordinates = parse_coordinates(
+			request.POST.get('latitude'),
+			request.POST.get('longitude'),
+		)
 		user = User.objects.create_user(username=username, email=email, password=password)
-		Customer.objects.create(user=user, address=address, phone=phone)
+		Customer.objects.create(
+			user=user,
+			address=address,
+			phone=phone,
+			latitude=coordinates[0] if coordinates else None,
+			longitude=coordinates[1] if coordinates else None,
+		)
 		login(request, user)
 		_merge_guest_cart(request, user)
 		return redirect('product_list')
@@ -2260,3 +2287,139 @@ class CartLoginView(LoginView):
 def user_logout(request):
 	logout(request)
 	return redirect('product_list')
+
+
+# ---------------------------------------------------------------------------
+# Location: nearby shops, shop pages and saving a browser location
+# ---------------------------------------------------------------------------
+LOCATION_SESSION_KEY = 'location'
+
+
+def _current_location(request):
+	"""Best known (lat, lng) for this visitor, or None.
+
+	Order: location saved in this browser session, then the customer's default
+	delivery address, then the customer's profile location.
+	"""
+	saved = request.session.get(LOCATION_SESSION_KEY)
+	if isinstance(saved, (list, tuple)) and len(saved) == 2:
+		coordinates = parse_coordinates(saved[0], saved[1])
+		if coordinates:
+			return coordinates
+	if request.user.is_authenticated:
+		address = DeliveryAddress.objects.filter(
+			customer__user_id=request.user.id,
+			is_default=True,
+			latitude__isnull=False,
+			longitude__isnull=False,
+		).first()
+		if address:
+			return address.latitude, address.longitude
+		customer = Customer.objects.filter(
+			user_id=request.user.id,
+			latitude__isnull=False,
+			longitude__isnull=False,
+		).first()
+		if customer:
+			return customer.latitude, customer.longitude
+	return None
+
+
+@require_POST
+def save_location(request):
+	"""Store the browser location for the visitor.
+
+	Vendors save it as their shop location, customers as their profile
+	location. Guests keep it only in the session.
+	"""
+	coordinates = parse_coordinates(
+		request.POST.get('latitude'),
+		request.POST.get('longitude'),
+	)
+	if coordinates is None:
+		return JsonResponse(
+			{'ok': False, 'error': 'Enter a valid latitude and longitude.'},
+			status=400,
+		)
+	latitude, longitude = coordinates
+	if request.user.is_authenticated:
+		vendor = Vendor.objects.filter(user=request.user).first()
+		if vendor is not None:
+			vendor.latitude = latitude
+			vendor.longitude = longitude
+			vendor.save(update_fields=['latitude', 'longitude'])
+			return JsonResponse({'ok': True, 'role': 'vendor'})
+		Customer.objects.filter(user=request.user).update(
+			latitude=latitude,
+			longitude=longitude,
+		)
+	request.session[LOCATION_SESSION_KEY] = [latitude, longitude]
+	return JsonResponse({'ok': True, 'role': 'customer'})
+
+
+def nearby_shops(request):
+	"""All shops, closest first. Far shops are flagged, never hidden."""
+	location = _current_location(request)
+	vendors = list(
+		Vendor.objects.annotate(
+			listing_count=Count('products'),
+			available_count=Count('products', filter=Q(products__stock__gt=0)),
+		)
+		.filter(listing_count__gt=0)
+		.order_by('name')
+	)
+	categories_by_vendor = {}
+	for vendor_id, category_name in (
+		Product.objects.filter(vendor__in=vendors)
+		.order_by('category__name')
+		.values_list('vendor_id', 'category__name')
+		.distinct()
+	):
+		categories_by_vendor.setdefault(vendor_id, []).append(category_name)
+
+	shops = []
+	for vendor in vendors:
+		distance = distance_to_vendor(location, vendor)
+		shops.append({
+			'vendor': vendor,
+			'distance_km': distance,
+			'distance_label': format_distance(distance),
+			'far_away': is_far_away(distance),
+			'categories': categories_by_vendor.get(vendor.id, [])[:4],
+		})
+	# Closest first. Shops without a saved location go last, A-Z.
+	shops.sort(key=lambda shop: (
+		shop['distance_km'] is None,
+		shop['distance_km'] if shop['distance_km'] is not None else 0,
+		(shop['vendor'].shop_name or shop['vendor'].name).lower(),
+	))
+	return render(request, 'market/nearby_shops.html', {
+		'shops': shops,
+		'has_location': location is not None,
+		'delivery_radius_km': DELIVERY_RADIUS_KM,
+		'nearby_count': sum(
+			1 for shop in shops
+			if shop['distance_km'] is not None and not shop['far_away']
+		),
+	})
+
+
+def shop_detail(request, vendor_id):
+	"""One shop and only its own vegetables and fruits."""
+	vendor = get_object_or_404(Vendor, id=vendor_id)
+	products = (
+		Product.objects.filter(vendor=vendor)
+		.select_related('category', 'vendor')
+		.order_by('category__name', 'name', 'id')
+	)
+	location = _current_location(request)
+	distance = distance_to_vendor(location, vendor)
+	return render(request, 'market/shop_detail.html', {
+		'vendor': vendor,
+		'products': products,
+		'distance_label': format_distance(distance),
+		'far_away': is_far_away(distance),
+		'has_location': location is not None,
+		'delivery_radius_km': DELIVERY_RADIUS_KM,
+		'wishlist_product_ids': _wishlist_product_ids(request),
+	})

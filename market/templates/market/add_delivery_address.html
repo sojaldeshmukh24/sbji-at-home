@@ -7,6 +7,7 @@
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
+        {% include "market/partials/location_picker.html" with heading="Pin this address on the map" help_text="Stand at this address and tap the button so we can match you with nearby shops." %}
         <button type="submit">Save address</button>
     </form>
     <p><a href="{% url 'customer_profile' %}">Back to my profile</a></p>

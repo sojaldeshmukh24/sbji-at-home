@@ -130,7 +130,12 @@
                     {% if vendor.description %}<div><dt>Shop description</dt><dd>{{ vendor.description }}</dd></div>{% endif %}
                     <div><dt>Email</dt><dd>{{ vendor.email|default:"Not provided" }}</dd></div>
                     <div><dt>Phone</dt><dd>{{ vendor.phone|default:"Not provided" }}</dd></div>
+                    <div><dt>Shop location</dt><dd>{% if vendor.has_location %}{{ vendor.latitude|floatformat:5 }}, {{ vendor.longitude|floatformat:5 }}{% else %}Not set. Customers cannot see how far you are.{% endif %}</dd></div>
                 </dl>
+                {% url 'save_location' as save_location_url %}
+                <div style="margin-top: 1rem;">
+                    {% include "market/partials/location_picker.html" with save_url=save_location_url heading="Shop location" button_label="Set shop location to where I am now" help_text="Do this while you are at your shop. Customers see shops closest to them first." %}
+                </div>
             </section>
         </div>
         <section id="products" class="vendor-card vendor-section" aria-labelledby="products-heading">

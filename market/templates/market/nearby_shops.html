@@ -1,0 +1,79 @@
+{% extends "market/base.html" %}
+
+{% block title %}Shops near you | SBJI@Home{% endblock %}
+
+{% block content %}
+    {% url 'save_location' as save_location_url %}
+    <style>
+        .shops-page { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .shops-head h1 { margin: 0 0 .3rem; font-size: clamp(1.6rem, 4.5vw, 2.2rem); letter-spacing: -.03em; }
+        .shops-head p { margin: 0 0 1rem; color: #52665a; max-width: 60ch; line-height: 1.55; }
+        .shops-list { display: grid; gap: .75rem; margin: 1.1rem 0 0; padding: 0; list-style: none; }
+        .shop-card { display: grid; gap: .5rem; padding: 1rem; border: 1px solid #e2eae4; border-radius: 16px; background: #fff; box-shadow: 0 3px 14px rgb(20 45 30 / 5%); }
+        .shop-card-top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+        .shop-card h2 { margin: 0; font-size: 1.1rem; }
+        .shop-card h2 a { color: inherit; text-decoration: none; }
+        .shop-card h2 a:hover { color: #176b45; text-decoration: underline; }
+        .shop-card .shop-owner { margin: .1rem 0 0; color: #617269; font-size: .84rem; }
+        .shop-distance { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .65rem; border-radius: 999px; background: #e8f5ee; color: #155b3e; font-size: .85rem; font-weight: 800; white-space: nowrap; }
+        .shop-distance-far { background: #fff4dc; color: #7a5300; }
+        .shop-distance-unknown { background: #eef1ef; color: #617269; }
+        .shop-far-note { margin: 0; color: #7a5300; font-size: .82rem; }
+        .shop-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+        .shop-tags li { padding: .2rem .55rem; border-radius: 8px; background: #f0f6f1; color: #355a43; font-size: .78rem; font-weight: 650; }
+        .shop-meta { margin: 0; color: #617269; font-size: .84rem; }
+        .shop-card-link { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; padding: .55rem 1rem; border-radius: 10px; background: #176b45; color: #fff; font-weight: 800; text-decoration: none; }
+        .shop-card-link:hover { background: #105236; }
+        .shops-empty { padding: 1.5rem; border: 1px dashed #cbd5ce; border-radius: 14px; background: #fff; color: #617269; }
+        @media (min-width: 720px) { .shops-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    </style>
+    <main class="shops-page">
+        <header class="shops-head">
+            <h1>Shops near you</h1>
+            <p>Fresh vegetables and fruits from local vendors, closest first. Pick a shop to see only what it sells.</p>
+        </header>
+
+        {% if has_location %}
+            {% include "market/partials/location_picker.html" with save_url=save_location_url heading="Your location is set" button_label="Update my location" help_text="Distances are measured from the location saved on this device." %}
+        {% else %}
+            {% include "market/partials/location_picker.html" with save_url=save_location_url heading="Find shops close to you" help_text="Share your location to see how far each shop is. You can still browse every shop without it." %}
+        {% endif %}
+
+        {% if has_location %}
+            <p class="shop-meta" style="margin-top:.9rem;">
+                {{ nearby_count }} shop{{ nearby_count|pluralize }} within {{ delivery_radius_km }} km. Farther shops are still listed below.
+            </p>
+        {% endif %}
+
+        <ul class="shops-list">
+            {% for shop in shops %}
+                <li class="shop-card">
+                    <div class="shop-card-top">
+                        <div>
+                            <h2><a href="{% url 'shop_detail' shop.vendor.id %}">{{ shop.vendor.shop_name|default:shop.vendor.name }}</a></h2>
+                            {% if shop.vendor.shop_name %}<p class="shop-owner">{{ shop.vendor.name }}</p>{% endif %}
+                        </div>
+                        {% if shop.distance_km is not None %}
+                            <span class="shop-distance{% if shop.far_away %} shop-distance-far{% endif %}">📍 {{ shop.distance_label }} away</span>
+                        {% elif has_location %}
+                            <span class="shop-distance shop-distance-unknown">Distance unknown</span>
+                        {% endif %}
+                    </div>
+                    {% if shop.far_away %}
+                        <p class="shop-far-note">Far away: delivery from this shop may take longer.</p>
+                    {% endif %}
+                    {% if shop.vendor.shop_address %}<p class="shop-meta">{{ shop.vendor.shop_address }}</p>{% endif %}
+                    {% if shop.categories %}
+                        <ul class="shop-tags" aria-label="What this shop sells">
+                            {% for name in shop.categories %}<li>{{ name }}</li>{% endfor %}
+                        </ul>
+                    {% endif %}
+                    <p class="shop-meta">{{ shop.vendor.available_count }} item{{ shop.vendor.available_count|pluralize }} in stock</p>
+                    <div><a class="shop-card-link" href="{% url 'shop_detail' shop.vendor.id %}">Shop here</a></div>
+                </li>
+            {% empty %}
+                <li class="shops-empty">No shops have listed products yet. Please check back soon.</li>
+            {% endfor %}
+        </ul>
+    </main>
+{% endblock %}
