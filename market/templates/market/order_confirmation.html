@@ -136,6 +136,9 @@
                                     {% else %}
                                         — {{ vendor_order.get_status_display }}
                                     {% endif %}
+                                    {% if vendor_order.vendor and vendor_order.status == 'delivered' %}
+                                        {% if vendor_order.review %}· ★ You rated {{ vendor_order.review.rating }}/5{% else %}· <a href="{% url 'review_vendor_order' vendor_order.id %}">Rate this shop</a>{% endif %}
+                                    {% endif %}
                                     <ul>
                                         {% for item in vendor_order.items.all %}
                                             <li>{{ item.quantity }} × {% if item.product_name_snapshot %}{{ item.product_name_snapshot }}{% elif item.product %}{{ item.product.name }}{% else %}Product information unavailable{% endif %}{% if item.product_units_snapshot %} ({{ item.product_units_snapshot }}){% endif %}</li>
@@ -209,7 +212,8 @@
             </section>
         {% endif %}
         <nav class="order-detail-links" aria-label="Order navigation">
-            <a class="order-detail-link" href="{% url 'order_history' %}">My orders</a>
+            <a class="order-detail-link" href="{% url 'track_order' order.id %}">Track delivery</a>
+            <a class="order-detail-secondary" href="{% url 'order_history' %}">My orders</a>
             <a class="order-detail-secondary" href="{% url 'customer_profile' %}">My account</a>
             <a class="order-detail-secondary" href="{% url 'wishlist' %}">Wishlist</a>
             <a class="order-detail-secondary" href="{% url 'cart' %}">My Cart</a>

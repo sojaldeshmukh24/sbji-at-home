@@ -38,6 +38,10 @@
         .checkout-section h2 { margin: 0 0 .65rem; font-size: 1.15rem; }
         .checkout-section > p { color: #68736d; }
         .checkout-address-details, .checkout-slot-details { padding: .75rem; border-radius: 10px; background: #f6f8f6; color: #435149; }
+        .checkout-address-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem 1rem; }
+        .checkout-address-field { min-width: 0; }
+        .checkout-address-field-wide { grid-column: 1 / -1; }
+        .checkout-address-field .errorlist { grid-column: 1 / -1; }
         .checkout-order-items { margin: 0; padding: 0; list-style: none; }
         .checkout-order-items li { display: flex; justify-content: space-between; gap: 1rem; padding: .65rem 0; border-bottom: 1px solid #e6ebe7; }
         .checkout-order-items li:last-child { border-bottom: 0; }
@@ -92,6 +96,10 @@
             .checkout-page { padding: 2rem 1.25rem 3rem; }
             .checkout-section { padding: 1.25rem; }
         }
+        @media (max-width: 520px) {
+            .checkout-address-grid { grid-template-columns: minmax(0, 1fr); }
+            .checkout-address-field-wide { grid-column: auto; }
+        }
     </style>
     <main class="checkout-page">
     <h1>Checkout</h1>
@@ -133,7 +141,16 @@
     <h3>Add a new address</h3>
     <form method="post" action="{% url 'add_checkout_address' %}">
         {% csrf_token %}
-        {{ new_address_form.as_p }}
+        <div class="checkout-address-grid">
+            {% for hidden in new_address_form.hidden_fields %}{{ hidden }}{% endfor %}
+            {% for field in new_address_form.visible_fields %}
+                <div class="checkout-address-field{% if field.name == 'address_line_1' or field.name == 'address_line_2' %} checkout-address-field-wide{% endif %}">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+        </div>
         <button type="submit">Add and use this address</button>
     </form>
     </section>

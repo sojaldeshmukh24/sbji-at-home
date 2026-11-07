@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.db.models import (
+	Avg,
 	Case,
 	Count,
 	DecimalField,
@@ -36,6 +37,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from .tracking import build_tracking
 from .geo import (
 	DELIVERY_RADIUS_KM,
 	distance_to_vendor,
@@ -49,6 +51,7 @@ from .forms import (
 	DeliveryAddressForm,
 	ProductForm,
 	ProductSearchForm,
+	ReviewForm,
 	StockUpdateForm,
 	VendorAuthenticationForm,
 	VendorRegistrationForm,
@@ -66,6 +69,7 @@ from .models import (
 	Notification,
 	Product,
 	RecentlyViewedItem,
+	Review,
 	Vendor,
 	VendorOrder,
 	WishlistItem,
@@ -1106,10 +1110,22 @@ def _checkout_page_context(request, context, address_form=None):
 				request.session[customer_session_key] = customer.id
 				request.session[address_session_key] = selected_address.id
 
+	if address_form is None:
+		initial = {'label': 'Home'}
+		if customer is not None:
+			initial.update({
+				'recipient_name': (
+					customer.user.get_full_name().strip()
+					or customer.user.get_username()
+				),
+				'phone': customer.phone,
+			})
+		address_form = DeliveryAddressForm(initial=initial)
+
 	context.update({
 		'delivery_addresses': addresses,
 		'selected_delivery_address': selected_address,
-		'new_address_form': address_form or DeliveryAddressForm(),
+		'new_address_form': address_form,
 	})
 	return _checkout_slot_page_context(request, context)
 
@@ -2377,11 +2393,13 @@ def nearby_shops(request):
 	):
 		categories_by_vendor.setdefault(vendor_id, []).append(category_name)
 
+	ratings = _vendor_rating_summary([vendor.id for vendor in vendors])
 	shops = []
 	for vendor in vendors:
 		distance = distance_to_vendor(location, vendor)
 		shops.append({
 			'vendor': vendor,
+			'rating': ratings.get(vendor.id),
 			'distance_km': distance,
 			'distance_label': format_distance(distance),
 			'far_away': is_far_away(distance),
@@ -2421,5 +2439,117 @@ def shop_detail(request, vendor_id):
 		'far_away': is_far_away(distance),
 		'has_location': location is not None,
 		'delivery_radius_km': DELIVERY_RADIUS_KM,
+		'rating': _vendor_rating_summary([vendor.id]).get(vendor.id),
+		'reviews': list(vendor.reviews.select_related('customer__user')[:5]),
 		'wishlist_product_ids': _wishlist_product_ids(request),
+	})
+
+
+# ---------------------------------------------------------------------------
+# Delivery tracking and shop reviews
+# ---------------------------------------------------------------------------
+def _vendor_rating_summary(vendor_ids):
+	"""{vendor_id: {'average': 4.5, 'count': 12}} for vendors with reviews."""
+	rows = (
+		Review.objects.filter(vendor_id__in=vendor_ids)
+		.values('vendor_id')
+		.annotate(average=Avg('rating'), total=Count('id'))
+		.order_by()
+	)
+	return {
+		row['vendor_id']: {
+			'average': round(row['average'], 1),
+			'count': row['total'],
+		}
+		for row in rows
+	}
+
+
+@login_required(login_url='login')
+def track_order(request, order_id):
+	"""Step-by-step delivery tracking, one timeline per shop."""
+	order = get_object_or_404(
+		Order.objects.prefetch_related(
+			Prefetch(
+				'vendor_orders',
+				queryset=VendorOrder.objects.select_related('vendor').prefetch_related(
+					'items',
+					'status_history',
+				),
+			),
+		),
+		id=order_id,
+		customer__user=request.user,
+	)
+	tracks = []
+	for vendor_order in order.vendor_orders.all():
+		reviewed = Review.objects.filter(vendor_order=vendor_order).exists()
+		delivered = vendor_order.status == VendorOrder.Status.DELIVERED
+		tracks.append({
+			'vendor_order': vendor_order,
+			'name': (
+				vendor_order.vendor.shop_name or vendor_order.vendor.name
+				if vendor_order.vendor_id
+				else 'Sbji@Home platform'
+			),
+			'item_count': sum(item.quantity for item in vendor_order.items.all()),
+			'steps': build_tracking(vendor_order, order.order_date),
+			'rejected': vendor_order.status == VendorOrder.Status.REJECTED,
+			'delivered': delivered,
+			'reviewed': reviewed,
+			'can_review': (
+				delivered and vendor_order.vendor_id is not None and not reviewed
+			),
+		})
+	is_open = order.status != Order.Status.CANCELLED and any(
+		not track['delivered'] and not track['rejected'] for track in tracks
+	)
+	return render(request, 'market/track_order.html', {
+		'order': order,
+		'tracks': tracks,
+		'auto_refresh': is_open,
+	})
+
+
+@login_required(login_url='login')
+@require_http_methods(['GET', 'POST'])
+def review_vendor_order(request, vendor_order_id):
+	"""Let a customer rate a shop once, after that shop delivered."""
+	vendor_order = get_object_or_404(
+		VendorOrder.objects.select_related('vendor', 'order__customer'),
+		id=vendor_order_id,
+		order__customer__user=request.user,
+	)
+	back = redirect('order_confirmation', order_id=vendor_order.order_id)
+	if (
+		vendor_order.vendor_id is None
+		or vendor_order.status != VendorOrder.Status.DELIVERED
+	):
+		messages.error(
+			request,
+			'You can rate a shop only after it has delivered your items.',
+		)
+		return back
+	if Review.objects.filter(vendor_order=vendor_order).exists():
+		messages.info(request, 'You have already rated this shop for this order.')
+		return back
+
+	form = ReviewForm(request.POST or None)
+	if request.method == 'POST' and form.is_valid():
+		review = form.save(commit=False)
+		review.vendor_order = vendor_order
+		review.vendor = vendor_order.vendor
+		review.customer = vendor_order.order.customer
+		try:
+			with transaction.atomic():
+				review.save()
+		except IntegrityError:
+			messages.info(request, 'You have already rated this shop for this order.')
+		else:
+			messages.success(request, 'Thanks! Your review was saved.')
+		return back
+	return render(request, 'market/review_form.html', {
+		'form': form,
+		'vendor_order': vendor_order,
+		'shop_name': vendor_order.vendor.shop_name or vendor_order.vendor.name,
 	})

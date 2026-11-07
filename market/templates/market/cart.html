@@ -113,21 +113,8 @@
             font-weight: 700;
             text-align: center;
         }
-        .cart-quantity-update {
-            min-height: 34px;
-            padding: .35rem .55rem;
-            border: 1px solid #b9d5c4;
-            border-radius: 8px;
-            background: #fff;
-            color: var(--cart-green-dark);
-            font: inherit;
-            font-size: .78rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
         .cart-quantity-control button:focus-visible,
         .cart-quantity-control input:focus-visible,
-        .cart-quantity-update:focus-visible,
         .cart-remove:focus-visible {
             outline: 3px solid #e3a928;
             outline-offset: 2px;
@@ -270,9 +257,8 @@
                                             <input type="hidden" name="product_id" value="{{ item.product_id }}">
                                             {% if item.quantity_is_valid %}
                                                 <button type="submit" name="adjustment" value="decrease" aria-label="Decrease {{ item.product.name }} quantity">−</button>
-                                                <input type="number" name="quantity" min="1" max="{{ item.product.stock }}" value="{{ item.quantity }}" aria-label="{{ item.product.name }} quantity">
+                                                <input type="number" name="quantity" min="1" max="{{ item.product.stock }}" value="{{ item.quantity }}" aria-label="{{ item.product.name }} quantity" data-cart-quantity>
                                                 <button type="submit" name="adjustment" value="increase" aria-label="Increase {{ item.product.name }} quantity">+</button>
-                                                <button class="cart-quantity-update" type="submit" name="update_quantity" value="1">Update</button>
                                             {% else %}
                                                 <span aria-label="Invalid quantity">{{ item.quantity }}</span>
                                             {% endif %}
@@ -323,4 +309,13 @@
             <a class="cart-continue-shopping" href="{% url 'product_list' %}">Continue shopping</a>
         {% endif %}
     </main>
+    <script>
+        document.querySelectorAll('[data-cart-quantity]').forEach(function (input) {
+            input.addEventListener('change', function () {
+                if (input.form) {
+                    input.form.requestSubmit();
+                }
+            });
+        });
+    </script>
 {% endblock %}

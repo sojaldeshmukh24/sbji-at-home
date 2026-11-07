@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
-from .models import Customer, DeliveryAddress, Product, Vendor
+from .models import Customer, DeliveryAddress, Product, Review, Vendor
 
 
 class VendorSearchForm(forms.Form):
@@ -167,4 +167,27 @@ class DeliveryAddressForm(forms.ModelForm):
         widgets = {
             'latitude': forms.HiddenInput,
             'longitude': forms.HiddenInput,
+        }
+
+
+class ReviewForm(forms.ModelForm):
+    rating = forms.TypedChoiceField(
+        choices=[
+            (5, '5 - Excellent'),
+            (4, '4 - Good'),
+            (3, '3 - Okay'),
+            (2, '2 - Poor'),
+            (1, '1 - Terrible'),
+        ],
+        coerce=int,
+        widget=forms.RadioSelect,
+        label='Your rating',
+    )
+
+    class Meta:
+        model = Review
+        fields = ('rating', 'comment')
+        labels = {'comment': 'Comment (optional)'}
+        widgets = {
+            'comment': forms.Textarea(attrs={'rows': 4, 'maxlength': 500}),
         }

@@ -30,6 +30,9 @@
             {% if vendor.description %}<p>{{ vendor.description }}</p>{% endif %}
             {% if vendor.shop_address %}<p>📍 {{ vendor.shop_address }}</p>{% endif %}
             <div class="shop-hero-badges">
+                {% if rating %}
+                    <span class="shop-badge">★ {{ rating.average }} ({{ rating.count }} review{{ rating.count|pluralize }})</span>
+                {% endif %}
                 {% if distance_label %}
                     <span class="shop-badge{% if far_away %} shop-badge-far{% endif %}">{{ distance_label }} from you</span>
                 {% endif %}
@@ -52,5 +55,18 @@
                 <li class="shop-empty">This shop has not listed any products yet.</li>
             {% endfor %}
         </ul>
+        {% if reviews %}
+            <div class="shop-section-title">
+                <h2>What customers say</h2>
+            </div>
+            <ul class="shop-reviews" style="list-style:none;margin:0;padding:0;display:grid;gap:.6rem;">
+                {% for review in reviews %}
+                    <li style="padding:.8rem 1rem;border:1px solid #e2eae4;border-radius:12px;background:#fff;">
+                        <strong>{{ review.customer.user.first_name|default:"A customer" }}</strong> · ★ {{ review.rating }}/5
+                        {% if review.comment %}<p style="margin:.3rem 0 0;color:#52665a;">{{ review.comment }}</p>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
     </main>
 {% endblock %}

@@ -1,0 +1,66 @@
+{% extends "market/base.html" %}
+
+{% block title %}Track order #{{ order.id }} | SBJI@Home{% endblock %}
+
+{% block content %}
+    <style>
+        .track-page { max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 3rem; color: #183329; }
+        .track-back { display: inline-block; margin-bottom: .6rem; color: #176b45; font-weight: 700; text-decoration: none; }
+        .track-page h1 { margin: 0 0 .3rem; font-size: clamp(1.5rem, 4vw, 2rem); }
+        .track-sub { margin: 0 0 1rem; color: #617269; }
+        .track-card { margin-bottom: 1rem; padding: 1rem; border: 1px solid #e2eae4; border-radius: 16px; background: #fff; }
+        .track-card h2 { margin: 0 0 .2rem; font-size: 1.1rem; }
+        .track-meta { margin: 0 0 .8rem; color: #617269; font-size: .9rem; }
+        .track-steps { margin: 0; padding: 0; list-style: none; }
+        .track-steps li { position: relative; padding: 0 0 1rem 1.9rem; border-left: 3px solid #cbd5ce; margin-left: .5rem; color: #617269; }
+        .track-steps li:last-child { padding-bottom: 0; border-left-color: transparent; }
+        .track-steps li::before { content: ""; position: absolute; left: -.62rem; top: .1rem; width: 1rem; height: 1rem; border-radius: 50%; background: #cbd5ce; }
+        .track-steps li.is-done { border-left-color: #176b45; color: #183329; }
+        .track-steps li.is-done::before { background: #176b45; }
+        .track-steps li.is-current { color: #183329; font-weight: 800; }
+        .track-steps li.is-current::before { background: #e0a000; box-shadow: 0 0 0 4px #fff1c7; }
+        .track-steps time { display: block; font-size: .8rem; font-weight: 500; color: #617269; }
+        .track-rejected { margin: 0; padding: .7rem .8rem; border-radius: 12px; background: #fdecec; color: #8a1f1f; }
+        .track-rate { display: inline-block; margin-top: .8rem; padding: .5rem .9rem; border-radius: 999px; background: #176b45; color: #fff; font-weight: 800; text-decoration: none; }
+        .track-done-note { margin: .8rem 0 0; color: #155b3e; font-weight: 700; }
+    </style>
+    <main class="track-page">
+        <a class="track-back" href="{% url 'order_confirmation' order.id %}">← Order #{{ order.id }}</a>
+        <h1>Track your delivery</h1>
+        <p class="track-sub">
+            {% if order.delivery_slot_date %}Delivery slot: {{ order.delivery_slot_date|date:"j M" }}{% if order.delivery_slot_name %}, {{ order.delivery_slot_name }}{% endif %}{% if order.delivery_slot_start_time %} ({{ order.delivery_slot_start_time|time:"g:i A" }} – {{ order.delivery_slot_end_time|time:"g:i A" }}){% endif %}.{% endif %}
+            Each shop delivers its own part of your order.
+        </p>
+        {% if order.status == 'cancelled' %}
+            <p class="track-rejected">This order was cancelled.</p>
+        {% endif %}
+        {% for track in tracks %}
+            <section class="track-card" aria-label="{{ track.name }}">
+                <h2>{{ track.name }}</h2>
+                <p class="track-meta">{{ track.item_count }} item{{ track.item_count|pluralize }} · {{ track.vendor_order.get_status_display }}</p>
+                {% if track.rejected %}
+                    <p class="track-rejected">Some items from this shop were unavailable, so it will not deliver this part of your order.</p>
+                {% else %}
+                    <ol class="track-steps">
+                        {% for step in track.steps %}
+                            <li class="{% if step.is_done %}is-done{% elif step.is_current %}is-current{% endif %}">
+                                {{ step.label }}
+                                {% if step.time %}<time datetime="{{ step.time|date:'c' }}">{{ step.time|date:"j M, g:i A" }}</time>{% endif %}
+                            </li>
+                        {% endfor %}
+                    </ol>
+                {% endif %}
+                {% if track.can_review %}
+                    <a class="track-rate" href="{% url 'review_vendor_order' track.vendor_order.id %}">Rate this shop</a>
+                {% elif track.reviewed %}
+                    <p class="track-done-note">★ You rated this shop {{ track.vendor_order.review.rating }}/5</p>
+                {% endif %}
+            </section>
+        {% empty %}
+            <p class="track-sub">Delivery details are not available for this order yet.</p>
+        {% endfor %}
+    </main>
+    {% if auto_refresh %}
+        <script>setTimeout(function () { window.location.reload(); }, 30000);</script>
+    {% endif %}
+{% endblock %}

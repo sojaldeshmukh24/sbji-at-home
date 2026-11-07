@@ -532,7 +532,8 @@ class CartAndCheckoutTests(TestCase):
             follow=True,
         )
 
-        self.assertContains(cart_page, 'name="update_quantity" value="1">Update')
+        self.assertContains(cart_page, 'data-cart-quantity')
+        self.assertNotContains(cart_page, 'name="update_quantity" value="1">Update')
         self.assertContains(response, 'Cart quantity updated.')
         self.assertEqual(
             self.client.session['cart'],
@@ -648,10 +649,27 @@ class CartAndCheckoutTests(TestCase):
         self.assertContains(checkout_response, 'Select an available slot.')
         self.assertContains(checkout_response, '₹5.00')
         self.assertContains(checkout_response, 'name="payment_method" value="cod" required')
+        self.assertContains(checkout_response, 'checkout-address-grid')
+        self.assertContains(checkout_response, 'name="address_line_1"')
+        self.assertNotContains(checkout_response, 'data-location-picker')
         self.assertNotRegex(
             checkout_response.content.decode(),
             r'id="payment-cod"[^>]*\bchecked\b',
         )
+
+    def test_checkout_prefills_recipient_and_phone_from_customer_profile(self):
+        self.user.first_name = 'Pat'
+        self.user.last_name = 'Customer'
+        self.user.save(update_fields=['first_name', 'last_name'])
+        self.client.force_login(self.user)
+        CartItem.objects.create(user=self.user, product=self.product, quantity=1)
+
+        response = self.client.get(reverse('checkout'))
+        address_form = response.context['new_address_form']
+
+        self.assertEqual(address_form.initial['label'], 'Home')
+        self.assertEqual(address_form.initial['recipient_name'], 'Pat Customer')
+        self.assertEqual(address_form.initial['phone'], self.customer.phone)
 
     def test_checkout_shows_saved_addresses_and_selects_default(self):
         default_address = DeliveryAddress.objects.create(
@@ -4446,7 +4464,7 @@ class ProductCategoryTests(TestCase):
         self.assertNotContains(response, '<option value="Milk">', html=False)
         self.assertContains(response, 'aria-label="Browse by category"')
 
-    def test_shared_header_shows_guest_cart_quantity(self):
+    def test_shared_header_cart_does_not_show_guest_quantity(self):
         self.client.post(
             reverse('add_to_cart', args=[self.produce_product.id]),
             {'quantity': '2'},
@@ -4455,9 +4473,10 @@ class ProductCategoryTests(TestCase):
         response = self.client.get(reverse('product_list'))
 
         self.assertContains(response, 'My Cart')
-        self.assertContains(response, 'aria-label="My Cart, 2 items"')
+        self.assertContains(response, 'aria-label="My Cart"')
+        self.assertNotContains(response, 'aria-label="My Cart, 2 items"')
 
-    def test_shared_header_shows_authenticated_database_cart_quantity(self):
+    def test_shared_header_cart_does_not_show_authenticated_quantity(self):
         user = User.objects.create_user(
             username='header-cart-customer',
             password='safe-password',
@@ -4471,7 +4490,8 @@ class ProductCategoryTests(TestCase):
 
         response = self.client.get(reverse('product_list'))
 
-        self.assertContains(response, 'aria-label="My Cart, 3 items"')
+        self.assertContains(response, 'aria-label="My Cart"')
+        self.assertNotContains(response, 'aria-label="My Cart, 3 items"')
 
     def test_header_search_keeps_active_marketplace_filters(self):
         response = self.client.get(

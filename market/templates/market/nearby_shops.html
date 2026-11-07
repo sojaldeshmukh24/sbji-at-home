@@ -59,6 +59,9 @@
                             <span class="shop-distance shop-distance-unknown">Distance unknown</span>
                         {% endif %}
                     </div>
+                    {% if shop.rating %}
+                        <p class="shop-meta">★ {{ shop.rating.average }} ({{ shop.rating.count }} review{{ shop.rating.count|pluralize }})</p>
+                    {% endif %}
                     {% if shop.far_away %}
                         <p class="shop-far-note">Far away: delivery from this shop may take longer.</p>
                     {% endif %}

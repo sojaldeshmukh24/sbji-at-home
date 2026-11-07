@@ -494,4 +494,41 @@ class OrderItem(models.Model):
         if self.product_id:
             product_name = self.product.name
         return f"Order {self.order.id} - {product_name} - Quantity: {self.quantity}"
+
+
+class Review(models.Model):
+    """A customer's rating of one shop, after that shop delivered its items."""
+
+    vendor_order = models.OneToOneField(
+        VendorOrder,
+        on_delete=models.CASCADE,
+        related_name='review',
+    )
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    comment = models.TextField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(rating__gte=1) & Q(rating__lte=5),
+                name='review_rating_between_1_and_5',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.vendor} - {self.rating}/5'
     
